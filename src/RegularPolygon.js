@@ -4,7 +4,7 @@ class RegularPolygon{
         //Setting parameters
         this.firstVertex = firstVertex;
         this.setAngle(numOfSides);
-        console.log(this.theta);
+        //console.log(this.theta);
         this.center = center;
         this.vertices = [];
 
@@ -16,10 +16,10 @@ class RegularPolygon{
     generatePolygon(){
         //Getting radial vector from 
         var radialVector = this.getVector(this.center, this.firstVertex);
-        console.log(radialVector);
+        //console.log(radialVector);
 
-        console.log("Axial vector in Polygon:");
-        console.log(this.axialVector.elements);
+        //console.log("Axial vector in Polygon:");
+        //console.log(this.axialVector.elements);
 
         var rotateMatrix = new Matrix4();
         for(var i = 1; i < this.numOfSides; i++){
@@ -30,7 +30,7 @@ class RegularPolygon{
                 this.axialVector.elements[2]);
             var translateVector = rotateMatrix.multiplyVector3(radialVector);
             var translatedPoint = this.translatePoint(this.center, translateVector); 
-            console.log(translatedPoint);
+            //console.log(translatedPoint);
             this.vertices.push(translatedPoint);   
         }
 

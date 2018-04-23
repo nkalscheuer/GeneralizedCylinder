@@ -24,6 +24,8 @@ var colorArr = [];
 var scoreBoard = [];
 var u_FragColor;
 var MAXPOINTS = 4;
+var NUMOFSIDES = 12;
+var RADIUS = 0.1;
 //var gl;
 function main() {
   // Retrieve <canvas> element
@@ -235,7 +237,7 @@ function renderPolyLine(gl, vertices){
   for(var i = 0; i < vertices.length - 3; i += 2){
     var start = new Vector3([vertices[i], vertices[i + 1], 0]);
     var end = new Vector3([vertices[i + 2], vertices[i + 3], 0]);
-    renderCylinder(gl, start, end, 12, 0.2);
+    renderCylinder(gl, start, end, NUMOFSIDES, RADIUS);
   }
   var n = initVertexBuffers(gl, vertices);
   gl.drawArrays(gl.LINE_STRIP, 0, n);
@@ -394,7 +396,10 @@ function initVertexBuffers(gl, vertexArray) {
   }
 
   function changePolygonSides(ev, gl){
-    renderPolygon(gl, Math.floor(ev.target.value));
+
+    //renderPolygon(gl, Math.floor(ev.target.value));
+    NUMOFSIDES = Math.floor(ev.target.value);
+    renderClickScene(gl);
   }
   function renderPolygon(gl, sides){
     gl.clear(gl.COLOR_BUFFER_BIT);
@@ -497,7 +502,7 @@ function initAttributes(gl) {
 function drawFace(gl, face){
   var vertices = [];
   for(var i = 0; i < face.vertices.length; i++){
-    console.log(face.vertices);
+    //console.log(face.vertices);
     var vertex = face.vertices[i].elements;
     //vertices = vertices.concat(vertex);
     //Push 3d vector on array
@@ -505,10 +510,10 @@ function drawFace(gl, face){
       vertices.push(vertex[j]);
     }
   }
-  console.log("face vertices for drawing:");
-  console.log(vertices);
-  console.log("face indices for drawing:");
-  console.log(face.indices);
+  // console.log("face vertices for drawing:");
+  // console.log(vertices);
+  // console.log("face indices for drawing:");
+  // console.log(face.indices);
   setVertexBuffer(gl, new Float32Array(vertices));
   setIndexBuffer(gl, new Uint16Array(face.indices));
   //setIndexBuffer(gl, new Uint16Array([0, 1, 2]));
@@ -529,6 +534,8 @@ function renderCylinder(gl, start, end, numberOfSides, radius){
   for(var i = 0; i < cylinder.faces.length; i++){
     drawFace(gl, cylinder.faces[i]);
   }
+  console.log("CYLINDER !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+  console.log(cylinder);
 }
 // var firstVertex = new Vector3([1.0, 1.0, 0]);
 // var center = new Vector3([0.0, 0.0, 0.0]);

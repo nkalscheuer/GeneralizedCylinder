@@ -24,14 +24,14 @@ class VectorLibrary{
         console.log(vector.elements);
         var vectorArrCopy = [];
         for(var i = 0; i < points.length; i++){
-            console.log("Point");
-            console.log(points[i]);
+            //console.log("Point");
+            //console.log(points[i]);
             var translatedPoint = VectorLibrary.translatePoint(VectorLibrary.copyVector(points[i]), vector);
-            console.log("Translated Point");
-            console.log(translatedPoint);
+            //console.log("Translated Point");
+            //console.log(translatedPoint);
             vectorArrCopy.push(translatedPoint);
         }
-        console.log("Translated point Arr:");
+        //console.log("Translated point Arr:");
         VectorLibrary.printVectorArr(vectorArrCopy);
         return vectorArrCopy;
     }
@@ -80,8 +80,8 @@ class VectorLibrary{
     }
     static printVectorArr(vectorArr){
         for(var i = 0; i < vectorArr.length; i++){
-            console.log("Vector " + i);
-            console.log(vectorArr[i].elements);
+            // console.log("Vector " + i);
+            // console.log(vectorArr[i].elements);
         }
     }
 }

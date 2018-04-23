@@ -22,7 +22,7 @@ class QuadFace {
     }
 
     setIndices(){
-        this.indices = [0, 1, 2, 0, 3, 2];
+        this.indices = [1, 2, 3, 1, 0, 3];
     }
 
 }

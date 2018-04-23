@@ -11,26 +11,29 @@ class OrthoCylinder {
         this.radius = radius;
         this.numOfSides = numOfSides;
 
-        console.log("Start: ");
-        console.log(start);
-        console.log("End: ");
-        console.log(end);
+        //console.log("Start: ");
+        //console.log(start);
+        //console.log("End: ");
+        // console.log(end);
         this.axialVector = VectorLibrary.getVector(start, end);
-        this.radialVector = VectorLibrary.scaleVector(radius, VectorLibrary.crossProduct(this.axialVector, planeNormal).normalize());
-        console.log("Radial Vector:");
-        console.log(this.radialVector);
-        console.log("Axial Vector:");
-        console.log(this.axialVector);
-        this.endCenter = VectorLibrary.translatePoint(end, this.radialVector);
-        this.poly = new RegularPolygon(end, this.endCenter, this.axialVector, numOfSides);
+        //this.radialVector = VectorLibrary.scaleVector(radius, VectorLibrary.crossProduct(this.axialVector, planeNormal).normalize());
+        this.radialVector = VectorLibrary.scaleVector(radius, planeNormal);
+        // console.log("Radial Vector:");
+        // console.log(this.radialVector);
+        // console.log("Axial Vector:");
+        // console.log(this.axialVector);
+        this.firstVertex = VectorLibrary.translatePoint(end, this.radialVector);
+        // console.log("FIRST VERTEX:");
+        // console.log(this.firstVertex);
+        this.poly = new RegularPolygon(this.firstVertex, end, this.axialVector, numOfSides);
         
 
         //Initializing end caps:
         this.startVerts = VectorLibrary.translatePointArr(this.poly.vertices, VectorLibrary.scaleVector(-1, this.axialVector));
-        console.log("Start Verts:");
+        // console.log("Start Verts:");
         VectorLibrary.printVectorArr(this.startVerts);
         this.endVerts = VectorLibrary.copyVectorArr(this.poly.vertices);
-        console.log("End cap:");
+        // console.log("End cap:");
         VectorLibrary.printVectorArr(this.endVerts);
         this.setFaces();
     }
@@ -46,10 +49,10 @@ class OrthoCylinder {
         this.faces = [];
         for(var i = 0; i < this.numOfSides; i++){
             var nextIndex = (i+1) % this.numOfSides;
-            console.log("Next Index: " + nextIndex);
+            // console.log("Next Index: " + nextIndex);
             this.faces.push(new QuadFace(this.endVerts[i], this.startVerts[i], this.startVerts[nextIndex], this.endVerts[nextIndex]));
-            console.log("Face " + i);
-            console.log(this.faces[i]);
+            // console.log("Face " + i);
+            // console.log(this.faces[i]);
         }
     }
 
