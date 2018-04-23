@@ -55,14 +55,11 @@ class OrthoCylinder {
             // console.log(this.faces[i]);
         }
     }
-
     getFaces(){
         return this.faces;
     }
-    //Draw faces
+}
 
-
-
-
+function concatOrthoCylinders(cylinders){
     
 }

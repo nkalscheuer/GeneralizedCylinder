@@ -26,6 +26,8 @@ var u_FragColor;
 var MAXPOINTS = 4;
 var NUMOFSIDES = 12;
 var RADIUS = 0.1;
+var cylindersModels = [];
+var cylindersModelIndex;
 //var gl;
 function main() {
   // Retrieve <canvas> element
@@ -69,15 +71,24 @@ function main() {
   //Initializing point size
   changePointSize(pointSizeChanger.value, gl);
 
+  
+  var radiusChanger = document.getElementById("radius");
+  radius.onchange = function(ev){ radiusSlideChaner(ev, gl); };
+
   //Change number of sides
 
   var sidesNumberChanger = document.getElementById("sidesNumberChanger");
   sidesNumberChanger.onchange = function (ev) { changePolygonSides(ev, gl) };
 
+  document.getElementById('save_canvas').onclick = function(){ saveCanvas(); };
+  document.getElementById('update_screen').onclick = function(){ updateScreen(canvas, gl); };
+
+  setupIOSOR("fileinput");
+
   //Delete functions
-//   var deleteButton = document.getElementById("deleteLine");
-//   console.log(deleteButton);
-//   deleteButton.onmousedown = function(ev){ onDelete(ev, gl); };
+  var deleteButton = document.getElementById("deleteLine");
+  console.log(deleteButton);
+  deleteButton.onmousedown = function(ev){ onDelete(ev, gl); };
  
   //Color changer
   var colorChanger = document.getElementById("colorChanger");
@@ -97,8 +108,8 @@ function main() {
 
   var startPoint = new Vector3([-0.5, 0, 0]);
   var endPoint = new Vector3([0.5, 0, 0]);
-  renderCylinder(gl, startPoint, endPoint, 12, 0.2);
-  renderPolyLine(gl, [1, 0, -1, 0]);
+  //renderCylinder(gl, startPoint, endPoint, 12, 0.2);
+  renderPolyLine(gl, [0.5, 0, -0.5, 0]);
 
 }
 
@@ -144,6 +155,10 @@ function click(ev, gl, canvas, a_Position) {
 
   // Store the coordinates to polyline array
   polyLineArr[polyLineIndex].push(x); polyLineArr[polyLineIndex].push(y);
+  if(polyLineArr[polyLineIndex] > 2){
+    addCylinder(polyLineArr[polyLineIndex]); 
+   
+  }
 
   
 
@@ -237,8 +252,13 @@ function renderPolyLine(gl, vertices){
   for(var i = 0; i < vertices.length - 3; i += 2){
     var start = new Vector3([vertices[i], vertices[i + 1], 0]);
     var end = new Vector3([vertices[i + 2], vertices[i + 3], 0]);
-    renderCylinder(gl, start, end, NUMOFSIDES, RADIUS);
+    //console.log("Cylinders Model: ");
+    //console.log(cylindersModel);
+    // renderCylinder(gl, start, end, NUMOFSIDES, RADIUS);
   }
+  var model = polyLineToOrthoCylindersModel(vertices);
+  renderCylinders(gl, model);
+
   var n = initVertexBuffers(gl, vertices);
   gl.drawArrays(gl.LINE_STRIP, 0, n);
   //gl.drawArrays(gl.POINTS, 0, n);
@@ -311,6 +331,12 @@ function initVertexBuffers(gl, vertexArray) {
   function pointSizeSliderChange(ev, gl){
     var size = ev.target.value;
     changePointSize(size, gl);
+    renderClickScene(gl);
+  }
+
+  function radiusSlideChaner(ev, gl){
+    var size = ev.target.value;
+    RADIUS = size/40;
     renderClickScene(gl);
   }
 
@@ -522,7 +548,8 @@ function drawFace(gl, face){
 
 function renderCylinder(gl, start, end, numberOfSides, radius){
   var cylinder = new OrthoCylinder(start, end, radius, numberOfSides);
-  
+  var cylinders = [];
+  cylinders.push(cylinder);
   initVertexBuffer(gl);
   initIndexBuffer(gl);
   initAttributes(gl);
@@ -530,13 +557,92 @@ function renderCylinder(gl, start, end, numberOfSides, radius){
   //For loop of faces
   
   console.log("First face: ");
-  console.log(cylinder.faces[0]);
-  for(var i = 0; i < cylinder.faces.length; i++){
-    drawFace(gl, cylinder.faces[i]);
-  }
+  // console.log(cylinder.faces[0]);
+  // for(var i = 0; i < cylinder.faces.length; i++){
+  //   drawFace(gl, cylinder.faces[i]);
+  // }
+  var cylinderModel = new OrthoCylindersModel(cylinders);
+  setVertexBuffer(gl, new Float32Array(cylinderModel.vertices));
+  console.log(cylinderModel);
+  setIndexBuffer(gl, new Uint16Array(cylinderModel.indices));
+  //setIndexBuffer(gl, new Uint16Array([0, 1, 2]));
+  gl.drawElements(gl.LINE_STRIP, cylinderModel.indices.length, gl.UNSIGNED_SHORT, 0);
   console.log("CYLINDER !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
   console.log(cylinder);
 }
+
+function renderCylinders(gl, model){
+  initVertexBuffer(gl);
+  initIndexBuffer(gl);
+  initAttributes(gl);
+  setVertexBuffer(gl, new Float32Array(model.vertices));
+  //console.log(cylinderModel);
+  setIndexBuffer(gl, new Uint16Array(model.indices));
+  gl.drawElements(gl.LINE_STRIP, model.indices.length, gl.UNSIGNED_SHORT, 0);
+}
+
+function saveModel(){
+
+}
+
+function polyLineToOrthoCylindersModel(vertices){
+  console.log(vertices);
+  var cylinders = [];
+  for(var i = 0; i < vertices.length - 3; i += 2){
+    var start = new Vector3([vertices[i], vertices[i + 1], 0]);
+    var end = new Vector3([vertices[i + 2], vertices[i + 3], 0]);
+    console.log("Start: ");
+    console.log(start);
+    console.log("End: ");
+    console.log(end);
+    var cylinder = new OrthoCylinder(start, end, RADIUS, NUMOFSIDES);
+    cylinders.push(cylinder);
+  }
+  var model = new OrthoCylindersModel(cylinders);
+  console.log(model);
+  return model;
+}
+
+function saveCanvas(){
+  var model = polyLineToOrthoCylindersModel(polyLineArr[polyLineIndex]);
+  var sor = new SOR();
+  sor.objName = "model";
+  sor.vertices = model.vertices;
+  sor.indexes = model.indices;
+  saveFile(sor);
+}
+
+function updateScreen(canvas, gl) {
+  canvas.onmousedown = null; // disable mouse
+  var sor = readFile();      // get SOR from file
+
+  // clear canvas    
+  gl.clear(gl.COLOR_BUFFER_BIT);
+  renderClickScene(gl); 
+  initVertexBuffer(gl);
+  initIndexBuffer(gl);
+  initAttributes(gl);
+  setVertexBuffer(gl, new Float32Array(sor.vertices));
+  setIndexBuffer(gl, new Uint16Array(sor.indexes));
+  // draw model
+  //gl.drawElements(gl.POINTS, sor.indexes.length, gl.UNSIGNED_SHORT, 0);
+  gl.drawElements(gl.LINE_STRIP, sor.indexes.length, gl.UNSIGNED_SHORT, 0);
+}
+
+// function addCylinder(vertices){
+//   var i = vertices.length - 3;
+//   var start = new Vector3([vertices[i], vertices[i + 1], 0]);
+//   var end = new Vector3([vertices[i + 2], vertices[i + 3], 0]);
+//   var cylinder = new OrthoCylinder(start, end, RADIUS, NUMOFSIDES);
+//   if(cylindersModels.length == 0){
+//     var cylinderModel = new OrthoCylindersModel(cylinder);
+//     cylindersModelIndex = 0;
+//   }else{
+//     cylinderModel.addCylinder(cylinder);
+//     cylindersModelIndex++;
+//   }
+
+// }
 // var firstVertex = new Vector3([1.0, 1.0, 0]);
 // var center = new Vector3([0.0, 0.0, 0.0]);
 
