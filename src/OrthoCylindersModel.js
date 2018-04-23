@@ -4,15 +4,15 @@ class OrthoCylindersModel{
        this.indices = [];
        
        for(var i = 0; i < cylinders.length; i++){
-           console.log("Cylinder : " + i);
+        //    console.log("Cylinder : " + i);
            var cylinderOffset = i * (cylinders[0].numOfSides * 4);
-           console.log("Num of Sides: " + cylinders[0].numOfSides);
-           console.log("Cylinder Offset: " + cylinderOffset);
+        //    console.log("Num of Sides: " + cylinders[0].numOfSides);
+        //    console.log("Cylinder Offset: " + cylinderOffset);
            for(var j = 0; j < cylinders[i].faces.length; j++){
                var faceOffset = j * cylinders[i].faces[j].vertices.length;
-               console.log("Face Offset: " + faceOffset);
+               //console.log("Face Offset: " + faceOffset);
                var vertexOffset = faceOffset + cylinderOffset;
-               console.log("Vertex Offset: " + vertexOffset);
+               //console.log("Vertex Offset: " + vertexOffset);
                for(var k = 0; k < cylinders[i].faces[j].indices.length; k++){
                  this.indices.push(cylinders[i].faces[j].indices[k] + vertexOffset);
                }

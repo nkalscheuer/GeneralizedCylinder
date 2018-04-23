@@ -20,8 +20,8 @@ class VectorLibrary{
         return result;
     }
     static translatePointArr(points, vector){
-        console.log("TranslateVector:");
-        console.log(vector.elements);
+        // console.log("TranslateVector:");
+        // console.log(vector.elements);
         var vectorArrCopy = [];
         for(var i = 0; i < points.length; i++){
             //console.log("Point");
