@@ -1,0 +1,58 @@
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Assignment 2</title>
+    <script src="../lib/webgl-utils.js"></script>
+    <script src="../lib/webgl-debug.js"></script>
+    <script src="../lib/cuon-utils.js"></script>
+    <script src="../lib/cuon-matrix.js"></script>
+    <script src="../lib/load-file.js"></script>
+    <script src="../lib/ioSOR.js"></script>
+    <script src="Vertex.js"></script>
+    <script src="VectorLibrary.js"></script>
+    <script src="RegularPolygon.js"></script>
+    <script src="QuadFace.js"></script>
+    <script src="OrthoCylinder.js"></script>
+    <script src="app.js"></script>
+  </head>
+
+  <body onload="main()">
+    <canvas id="webgl" width="400" height="400">
+    Please use a browser that supports "canvas"
+    </canvas>
+    <input type="file" id="fileinput" />
+    <button id="update_screen" type="button">Extract SOR</button>
+    <button id="save_canvas" type="button">Save</button>
+    <button id="reset_canvas" type="button">Reset Canvas</button>
+    <div id="settings">
+        <div id="pointSize">
+            <h2>Change Point Size:</h2>
+            <input id="pointSizeChanger" type="range" min="3" max="25" value="10"/>
+        </div>
+        <div id="sides">
+            <h2>Change Number of Sides:</h2>
+            <input id="sidesNumberChanger" type="range" min="3" max="100" value="10"/>
+        </div>
+        <div>
+            <h2>Change color of Current PolyLine:</h2>
+            <input id="colorChanger" type="color" value="#FF0000"/>
+
+        </div>
+        <div>
+            <h2>Delete a PolyLine</h2>
+            <select id="polyLines">
+
+            </select>
+            <input id="deleteLine" type="submit" value="Delete"/>
+        </div>
+        <div >
+            <h2 id="gameTitle"></h2>
+            <ul id="scoreBoard">
+
+            </ul>
+        </div>
+
+    </div>
+
+  </body>
+</html>
