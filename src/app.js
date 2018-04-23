@@ -96,6 +96,7 @@ function main() {
   var startPoint = new Vector3([-0.5, 0, 0]);
   var endPoint = new Vector3([0.5, 0, 0]);
   renderCylinder(gl, startPoint, endPoint, 12, 0.2);
+  renderPolyLine(gl, [1, 0, -1, 0]);
 
 }
 
@@ -231,15 +232,20 @@ function renderClickScene(gl){
 
 //Renders a specific polyline
 function renderPolyLine(gl, vertices){
+  for(var i = 0; i < vertices.length - 3; i += 2){
+    var start = new Vector3([vertices[i], vertices[i + 1], 0]);
+    var end = new Vector3([vertices[i + 2], vertices[i + 3], 0]);
+    renderCylinder(gl, start, end, 12, 0.2);
+  }
   var n = initVertexBuffers(gl, vertices);
   gl.drawArrays(gl.LINE_STRIP, 0, n);
-  gl.drawArrays(gl.POINTS, 0, n);
+  //gl.drawArrays(gl.POINTS, 0, n);
 }
 
 //Renders a scene where the cursor moves (Makes rubber band line)
 function renderMouseMoveScene(gl, vertices){
     gl.clear(gl.COLOR_BUFFER_BIT);
-    for(i = 0; i < polyLineArr.length; i++){
+    for(i = 0; i < polyLineArr.length - 1; i++){
         if(i != polyLineIndex){
           renderPolyLine(gl, polyLineArr[i]);
         }
@@ -247,7 +253,7 @@ function renderMouseMoveScene(gl, vertices){
     }
     var n = initVertexBuffers(gl, vertices);
     gl.drawArrays(gl.LINE_STRIP, 0, n);
-    gl.drawArrays(gl.POINTS, 0, n - 1);
+    //gl.drawArrays(gl.POINTS, 0, n - 1);
 }
 
 //Initialize vertex buffers with a specific vertex array
