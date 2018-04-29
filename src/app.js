@@ -73,7 +73,7 @@ function main() {
 
   
   var radiusChanger = document.getElementById("radius");
-  radius.onchange = function(ev){ radiusSlideChaner(ev, gl); };
+  radius.onchange = function(ev){ radiusSlideChanger(ev, gl); };
 
   //Change number of sides
 
@@ -104,11 +104,9 @@ function main() {
   // Clear <canvas>
   gl.clear(gl.COLOR_BUFFER_BIT);
 
-  //renderPolygon(gl, Math.floor(sidesNumberChanger.value));
 
   var startPoint = new Vector3([-0.5, 0, 0]);
   var endPoint = new Vector3([0.5, 0, 0]);
-  //renderCylinder(gl, startPoint, endPoint, 12, 0.2);
   renderPolyLine(gl, [0.5, 0, -0.5, 0]);
 
 }
@@ -335,7 +333,7 @@ function initVertexBuffers(gl, vertexArray) {
     renderClickScene(gl);
   }
 
-  function radiusSlideChaner(ev, gl){
+  function radiusSlideChanger(ev, gl){
     var size = ev.target.value;
     RADIUS = size/40;
     renderClickScene(gl);
@@ -346,9 +344,6 @@ function initVertexBuffers(gl, vertexArray) {
     var a_PointSize = gl.getAttribLocation(gl.program, 'a_PointSize');
     gl.vertexAttrib1f(a_PointSize, size);
   }
-
- 
-
  
   //Creates an option for the delete dropdown
   function createOption(number){
@@ -526,26 +521,26 @@ function initAttributes(gl) {
   gl.enableVertexAttribArray(a_Position);
   return true;
 }
-function drawFace(gl, face){
-  var vertices = [];
-  for(var i = 0; i < face.vertices.length; i++){
-    //console.log(face.vertices);
-    var vertex = face.vertices[i].elements;
-    //vertices = vertices.concat(vertex);
-    //Push 3d vector on array
-    for(var j = 0; j < vertex.length; j++){
-      vertices.push(vertex[j]);
-    }
-  }
-  // console.log("face vertices for drawing:");
-  // console.log(vertices);
-  // console.log("face indices for drawing:");
-  // console.log(face.indices);
-  setVertexBuffer(gl, new Float32Array(vertices));
-  setIndexBuffer(gl, new Uint16Array(face.indices));
-  //setIndexBuffer(gl, new Uint16Array([0, 1, 2]));
-  gl.drawElements(gl.LINE_STRIP, face.indices.length, gl.UNSIGNED_SHORT, 0);
-}
+// function drawFace(gl, face){
+//   var vertices = [];
+//   for(var i = 0; i < face.vertices.length; i++){
+//     //console.log(face.vertices);
+//     var vertex = face.vertices[i].elements;
+//     //vertices = vertices.concat(vertex);
+//     //Push 3d vector on array
+//     for(var j = 0; j < vertex.length; j++){
+//       vertices.push(vertex[j]);
+//     }
+//   }
+//   // console.log("face vertices for drawing:");
+//   // console.log(vertices);
+//   // console.log("face indices for drawing:");
+//   // console.log(face.indices);
+//   setVertexBuffer(gl, new Float32Array(vertices));
+//   setIndexBuffer(gl, new Uint16Array(face.indices));
+//   //setIndexBuffer(gl, new Uint16Array([0, 1, 2]));
+//   gl.drawElements(gl.LINE_STRIP, face.indices.length, gl.UNSIGNED_SHORT, 0);
+// }
 
 function renderCylinder(gl, start, end, numberOfSides, radius){
   var cylinder = new OrthoCylinder(start, end, radius, numberOfSides);
@@ -579,7 +574,7 @@ function renderCylinders(gl, model){
   setVertexBuffer(gl, new Float32Array(model.vertices));
   //console.log(cylinderModel);
   setIndexBuffer(gl, new Uint16Array(model.indices));
-  gl.drawElements(gl.LINE_STRIP, model.indices.length, gl.UNSIGNED_SHORT, 0);
+  gl.drawElements(gl.TRIANGLES, model.indices.length, gl.UNSIGNED_SHORT, 0);
 }
 
 function saveModel(){
@@ -599,6 +594,7 @@ function polyLineToOrthoCylindersModel(vertices){
     var cylinder = new OrthoCylinder(start, end, RADIUS, NUMOFSIDES);
     cylinders.push(cylinder);
   }
+  //Have the array of cylinders
   var model = new OrthoCylindersModel(cylinders);
   //console.log(model);
   return model;

@@ -10,56 +10,66 @@ class OrthoCylinder {
         this.end = end;
         this.radius = radius;
         this.numOfSides = numOfSides;
-
-        //console.log("Start: ");
-        //console.log(start);
-        //console.log("End: ");
-        // console.log(end);
         this.axialVector = VectorLibrary.getVector(start, end);
-        //this.radialVector = VectorLibrary.scaleVector(radius, VectorLibrary.crossProduct(this.axialVector, planeNormal).normalize());
         this.radialVector = VectorLibrary.scaleVector(radius, planeNormal);
-        // console.log("Radial Vector:");
-        // console.log(this.radialVector);
-        // console.log("Axial Vector:");
-        // console.log(this.axialVector);
         this.firstVertex = VectorLibrary.translatePoint(end, this.radialVector);
-        // console.log("FIRST VERTEX:");
-        // console.log(this.firstVertex);
         this.poly = new RegularPolygon(this.firstVertex, end, this.axialVector, numOfSides);
         
 
         //Initializing end caps:
         this.startVerts = VectorLibrary.translatePointArr(this.poly.vertices, VectorLibrary.scaleVector(-1, this.axialVector));
-        // console.log("Start Verts:");
+   
         VectorLibrary.printVectorArr(this.startVerts);
         this.endVerts = VectorLibrary.copyVectorArr(this.poly.vertices);
-        // console.log("End cap:");
         VectorLibrary.printVectorArr(this.endVerts);
         this.setFaces();
     }
 
-
-    setPolygon(){
+    //For connections
+    setEndPolygon(){
 
     }
+    setStartPolygon(){
 
-    //Set faces
-
+    }
     setFaces(){
         this.faces = [];
         for(var i = 0; i < this.numOfSides; i++){
             var nextIndex = (i+1) % this.numOfSides;
-            // console.log("Next Index: " + nextIndex);
             this.faces.push(new QuadFace(this.endVerts[i], this.startVerts[i], this.startVerts[nextIndex], this.endVerts[nextIndex]));
-            // console.log("Face " + i);
-            // console.log(this.faces[i]);
+        }
+    }
+
+    concatVertices(){
+        this.vertices = [];
+        this.indices = [];
+        for(var j = 0; j < this.faces.length; j++){
+            var faceOffset = j * this.faces[j].vertices.length;
+            var vertexOffset = faceOffset + cylinderOffset;
+            for(var k = 0; k < this.faces[j].indices.length; k++){
+              this.indices.push(this.faces[j].indices[k] + vertexOffset);
+            }
+            for(var l = 0; l < this.faces[j].vertices.length; l++){
+                for(var m = 0; m < this.faces[j].vertices[l].elements.length; m++){
+                 this.vertices.push(this.faces[j].vertices[l].elements[m]);
+                }
+            }
         }
     }
     getFaces(){
         return this.faces;
     }
-}
 
-function concatOrthoCylinders(cylinders){
-    
+    getVertBuffer(){
+        if(this.vertices != "undefined"){
+            this.concatVertices();
+        }
+        return this.vertices;
+    }
+    getIndexBuffer(){
+        if(this.indices != "undefined"){
+            this.concatVertices();
+        }
+        return this.indices;
+    }
 }
