@@ -577,10 +577,6 @@ function renderCylinders(gl, model){
   gl.drawElements(gl.TRIANGLES, model.indices.length, gl.UNSIGNED_SHORT, 0);
 }
 
-function saveModel(){
-
-}
-
 function polyLineToOrthoCylindersModel(vertices){
   //console.log(vertices);
   var cylinders = [];
@@ -626,26 +622,3 @@ function updateScreen(canvas, gl) {
   gl.drawElements(gl.LINE_STRIP, sor.indexes.length, gl.UNSIGNED_SHORT, 0);
 }
 
-// function addCylinder(vertices){
-//   var i = vertices.length - 3;
-//   var start = new Vector3([vertices[i], vertices[i + 1], 0]);
-//   var end = new Vector3([vertices[i + 2], vertices[i + 3], 0]);
-//   var cylinder = new OrthoCylinder(start, end, RADIUS, NUMOFSIDES);
-//   if(cylindersModels.length == 0){
-//     var cylinderModel = new OrthoCylindersModel(cylinder);
-//     cylindersModelIndex = 0;
-//   }else{
-//     cylinderModel.addCylinder(cylinder);
-//     cylindersModelIndex++;
-//   }
-
-// }
-// var firstVertex = new Vector3([1.0, 1.0, 0]);
-// var center = new Vector3([0.0, 0.0, 0.0]);
-
-// var axialVector = new Vector3([0, 0, 1]);
-
-// var poly = new RegularPolygon(firstVertex, center, axialVector, 4);
-// console.log(poly.firstVertex);
-
-// console.log(poly.vertices);
