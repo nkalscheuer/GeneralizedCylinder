@@ -75,6 +75,7 @@ class OrthoCylinder {
         if(this.indices == 0){
             this.concatVertices();
         }
+        console.log("Number of sides: " + this.numOfSides);
         return this.indices;
     }
     getNormalLines(length = 0.1){

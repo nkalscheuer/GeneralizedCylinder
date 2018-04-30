@@ -25,7 +25,8 @@ class QuadFace {
     }
 
     setIndices(){
-        this.indices = [1, 2, 3, 1, 0, 3];
+        this.indices = [1, 2, 3, 3, 0, 1];
+        //this.indices = [0, 1, 2, 2, 0, 3];
     }
     setNormal(){
         let ab = VectorLibrary.getVector(this.vertices[0], this.vertices[1]);
@@ -51,6 +52,29 @@ class QuadFace {
     getNormalLines(normalSize = 0.01){
         this.setNormalLines(normalSize);
         return this.normalLines;
+    }
+    getColor(color, lightSource){
+        console.log(this.vertices[0]);
+        console.log(lightSource);
+        let lightVector = VectorLibrary.getVector(this.vertices[0], lightSource.location).normalize();
+        console.log(lightVector);
+        console.log(this.normal);
+        let dotProduct = VectorLibrary.dotProduct(lightVector, this.normal);
+        console.log("Dot product:");
+        console.log(dotProduct);
+        let cosine = Math.max(dotProduct, 0);
+        let coe = lightSource.intensity * cosine;
+        console.log("Coefficient: ");
+        console.log(coe);
+        // let r = coe * color[0];
+        // let g = coe * color[1];
+        // let b = coe * color[2];
+        // //let a = 1; //For now
+        var colorResult = VectorLibrary.scaleVector(coe, color);
+        //console.log("Face color: ");
+        //console.log(colorResult);
+        return colorResult;
+
     }
 
 }

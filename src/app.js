@@ -2,20 +2,24 @@ var VSHADER_SOURCE =
   'attribute float a_PointSize;\n' +
   'attribute vec4 a_Color;\n' +
   'attribute vec4 a_Position;\n' +
+  'varying vec4 v_Color;\n' +
+  'uniform mat4 u_MvpMatrix;\n' +
   'void main() {\n' +
-  '  gl_Position = a_Position;\n' +
+  '  gl_Position = u_MvpMatrix * a_Position;\n' +
   '  gl_PointSize = a_PointSize;\n' +
-  //'  v_Color = a_Color;\n' +
+  '  v_Color = a_Color;\n' +
   '}\n';
   
 
 
 var FSHADER_SOURCE =
-   'precision mediump float;\n' +
-   'uniform vec4 u_FragColor;\n' + 
-   'void main() {\n' +
-   '  gl_FragColor = u_FragColor;\n' +
-   '}\n';
+    '#ifdef GL_ES\n' +
+    'precision mediump float;\n' +
+    '#endif\n' +
+    'varying vec4 v_Color;\n' + 
+    'void main() {\n' +
+    '  gl_FragColor = v_Color;\n' +
+    '}\n';
 
 var FSIZE = (new Float32Array()).BYTES_PER_ELEMENT;
 var pauseState = false;
@@ -26,10 +30,11 @@ var colorArr = [];
 var scoreBoard = [];
 var u_FragColor;
 var MAXPOINTS = 4;
-var NUMOFSIDES = 12;
+var NUMOFSIDES = 4;
 var RADIUS = 0.1;
 var cylindersModels = [];
 var cylindersModelIndex;
+var normalLineFlag = false;
 //var gl;
 function main() {
   // Retrieve <canvas> element
@@ -58,6 +63,20 @@ function main() {
     console.log('Failed to get the storage location of a_Position');
     return;
   }
+
+  // Get the storage location of u_MvpMatrix
+  var u_MvpMatrix = gl.getUniformLocation(gl.program, 'u_MvpMatrix');
+  if (!u_MvpMatrix) {
+    console.log('Failed to get the storage location of u_MvpMatrix');
+    return;
+  }
+  // Set the eye point and the viewing volume
+  var mvpMatrix = new Matrix4();
+  mvpMatrix.setPerspective(30, 1, 1, 100);
+  mvpMatrix.lookAt(3, 3, 7, 0, 0, 0, 0, 1, 0);
+
+  // Pass the model view projection matrix to u_MvpMatrix
+  gl.uniformMatrix4fv(u_MvpMatrix, false, mvpMatrix.elements);
   
   // Register event handlers
   //Click and mouse move
@@ -85,6 +104,8 @@ function main() {
   document.getElementById('save_canvas').onclick = function(){ saveCanvas(); };
   document.getElementById('update_screen').onclick = function(){ updateScreen(canvas, gl); };
 
+  document.getElementById('normalLines').onclick = function(ev){normalLinesToggle(ev, gl)};
+
   setupIOSOR("fileinput");
 
   //Delete functions
@@ -101,7 +122,8 @@ function main() {
   gl.uniform4f(u_FragColor, rgb[0], rgb[1], rgb[2], 1.0);
  
   // Specify the color for clearing <canvas>
-  gl.clearColor(0.0, 0.0, 0.0, 1.0);
+  gl.clearColor(1.0, 1.0, 1.0, 1.0);
+  gl.enable(gl.DEPTH_TEST);
 
   // Clear <canvas>
   gl.clear(gl.COLOR_BUFFER_BIT);
@@ -259,8 +281,8 @@ function renderPolyLine(gl, vertices){
   var model = polyLineToOrthoCylindersModel(vertices);
   //renderCylinders(gl, model);
 
-  var n = initVertexBuffers(gl, vertices);
-  gl.drawArrays(gl.LINE_STRIP, 0, n);
+  //var n = initVertexBuffers(gl, vertices);
+  //gl.drawArrays(gl.LINE_STRIP, 0, n);
   //gl.drawArrays(gl.POINTS, 0, n);
 }
 
@@ -491,6 +513,17 @@ function initVertexBuffers(gl, vertexArray) {
     gl.bindBuffer(gl.ARRAY_BUFFER, vertex_buffer);
     return true;
   }
+  function initColorBuffer(gl) {
+    // create buffer object
+    var color_buffer = gl.createBuffer();
+    if (!color_buffer) {
+      console.log("failed to create vertex buffer");
+      return false;
+    }
+    // bind buffer objects to targets
+    gl.bindBuffer(gl.ARRAY_BUFFER, color_buffer);
+    return true;
+  }
   function initIndexBuffer(gl) {
     // create buffer object
     var index_buffer = gl.createBuffer();
@@ -515,12 +548,15 @@ function setIndexBuffer(gl, indices) {
 function initAttributes(gl) {
   // assign buffer to a_Position and enable assignment
   var a_Position = gl.getAttribLocation(gl.program, 'a_Position');
+  var a_Color = gl.getAttribLocation(gl.program, 'a_Color');
   if (a_Position < 0) {
     console.log("failed to get storage location of attribute");
     return false;
   }
+  gl.vertexAttribPointer(a_Color, 3, gl.FLOAT, false, FSIZE * 3, 0);
   gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, FSIZE * 3, 0);
   gl.enableVertexAttribArray(a_Position);
+  gl.enableVertexAttribArray(a_Color);
   return true;
 }
 // function drawFace(gl, face){
@@ -548,29 +584,61 @@ function renderCylinder(gl, start, end, numberOfSides, radius){
 
     let color = new Vector3([0, 1, 0]);
     let lightColor = new Vector3([1, 1, 1]);
-    let lightPosition = new Vector3([1, 1, ,1]);
-    let lightSource = new LightSource(lightColor, lightPosition, 0.5); //intensity is 0.5
-    var cylinder = new ColoredCylinder(start, end, radius, numberOfSides, color, lightSource);
+    let lightPosition = new Vector3([1, 1, 1]);
+    let upVector = new Vector3([0, 0, 1]);
+    let lightSource = new LightSource(lightColor, lightPosition, 1); //intensity is 0.5
+    var cylinder = new ColoredCylinder(start, end, radius, numberOfSides,upVector, color, lightSource);
     var cylinders = [];
-    //cylinders.push(cylinder);
-    initVertexBuffer(gl);
-    initIndexBuffer(gl);
-    initAttributes(gl);
-    initIndexBuffer(gl);
-    //For loop of faces
+    var colors = cylinder.getColoredBuffer(lightSource);
+    var vertices = cylinder.getVertBuffer();
+    var indices = cylinder.getIndexBuffer();
+    console.log("Colored Buffer");
+    console.log(colors);
+    console.log("Vertex Buffer: ");
+    console.log(vertices);
+    console.log("Indices");
+    console.log(indices);
+
+    // initVertexBuffer(gl);
+    // initIndexBuffer(gl);
+    // initColorBuffer(gl);
+
+    // initAttributes(gl);
+    // initIndexBuffer(gl);
   
-    console.log("First face: ");
-  // console.log(cylinder.faces[0]);
-  // for(var i = 0; i < cylinder.faces.length; i++){
-  //   drawFace(gl, cylinder.faces[i]);
-  // }
-//   var cylinderModel = new OrthoCylindersModel(cylinders);
-    setVertexBuffer(gl, new Float32Array(cylinder.getVertBuffer()));
-//   console.log(cylinderModel);
-    setIndexBuffer(gl, new Uint16Array(cylinder.getIndexBuffer()));
-  //setIndexBuffer(gl, new Uint16Array([0, 1, 2]));
-    gl.drawElements(gl.LINE_STRIP, cylinder.indices.length, gl.UNSIGNED_SHORT, 0);
-    renderNormals(gl, cylinder.getNormalLines());
+//     console.log("First face: ");
+//   // console.log(cylinder.faces[0]);
+//   // for(var i = 0; i < cylinder.faces.length; i++){
+//   //   drawFace(gl, cylinder.faces[i]);
+//   // }
+// //   var cylinderModel = new OrthoCylindersModel(cylinders);
+//     setVertexBuffer(gl, new Float32Array(cylinder.getVertBuffer()));
+//     let colors = cylinder.getColoredBuffer(lightSource);
+//     console.log("Color buffer");
+//     console.log(colors);
+// //   console.log(cylinderModel);
+//     setIndexBuffer(gl, new Uint16Array(cylinder.getIndexBuffer()));
+//   //setIndexBuffer(gl, new Uint16Array([0, 1, 2]));
+//     gl.drawElements(gl.LINE_STRIP, cylinder.indices.length, gl.UNSIGNED_SHORT, 0);
+        // Create a buffer object
+    var indexBuffer = gl.createBuffer();
+    if (!indexBuffer) 
+        return -1;
+
+    // Write the vertex coordinates and color to the buffer object
+    if (!initArrayBuffer(gl, new Float32Array(vertices), 3, gl.FLOAT, 'a_Position'))
+        return -1;
+
+    if (!initArrayBuffer(gl, new Float32Array(colors), 3, gl.FLOAT, 'a_Color'))
+        return -1;
+
+    // Write the indices to the buffer object
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(cylinder.getIndexBuffer()), gl.STATIC_DRAW);
+    gl.drawElements(gl.TRIANGLES, cylinder.getIndexBuffer().length, gl.UNSIGNED_SHORT, 0);
+    if(normalLineFlag){
+        renderNormals(gl, cylinder.getNormalLines());
+    }
     console.log("CYLINDER !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
     console.log(cylinder);
 }
@@ -581,8 +649,26 @@ function renderNormals(gl, normalLines){
     }
     console.log("Normal lines:");
     console.log(normalLines);
-    setVertexBuffer(gl, new Float32Array(normalLines));
-    setIndexBuffer(gl, new Uint16Array(indexBuff));
+    // setVertexBuffer(gl, new Float32Array(normalLines));
+
+    // setIndexBuffer(gl, new Uint16Array(indexBuff));
+    var indexBuffer = gl.createBuffer();
+    if (!indexBuffer) 
+        return -1;
+
+    var lineColor = new Vector3([1, 0, 0]);
+    var colors = makeSolidColorBuffer(lineColor, indexBuff.length);
+    // Write the vertex coordinates and color to the buffer object
+    if (!initArrayBuffer(gl, new Float32Array(normalLines), 3, gl.FLOAT, 'a_Position'))
+        return -1;
+
+    if (!initArrayBuffer(gl, new Float32Array(colors), 3, gl.FLOAT, 'a_Color'))
+        return -1;
+
+    // Write the indices to the buffer object
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indexBuff), gl.STATIC_DRAW);
+    
     gl.drawElements(gl.LINES, indexBuff.length, gl.UNSIGNED_SHORT, 0);
 }
 
@@ -657,4 +743,25 @@ function initArrayBuffer(gl, data, num, type, attribute) {
     gl.enableVertexAttribArray(a_attribute);
   
     return true;
+  }
+
+  function makeSolidColorBuffer(color, length){
+      let colorArr = color.elements;
+      var colorBuff = [];
+      for(let i = 0; i < length; i++){
+        colorBuff.push(colorArr[0]);colorBuff.push(colorArr[1]);colorBuff.push(colorArr[2]);
+      }
+      return colorBuff;
+  }
+  function normalLinesToggle(ev, gl){
+    console.log("Toggle val: " + ev.target.checked);
+    if(ev.target.checked){
+        //Box is checked
+        normalLineFlag = true;
+        renderClickScene(gl);
+    }else{
+        normalLineFlag = false;
+        renderClickScene(gl);
+    }
+    console.log(ev);
   }
