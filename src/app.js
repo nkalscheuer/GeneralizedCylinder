@@ -1,9 +1,11 @@
 var VSHADER_SOURCE =
   'attribute float a_PointSize;\n' +
+  'attribute vec4 a_Color;\n' +
   'attribute vec4 a_Position;\n' +
   'void main() {\n' +
   '  gl_Position = a_Position;\n' +
   '  gl_PointSize = a_PointSize;\n' +
+  //'  v_Color = a_Color;\n' +
   '}\n';
   
 
@@ -252,10 +254,10 @@ function renderPolyLine(gl, vertices){
     var end = new Vector3([vertices[i + 2], vertices[i + 3], 0]);
     //console.log("Cylinders Model: ");
     //console.log(cylindersModel);
-    // renderCylinder(gl, start, end, NUMOFSIDES, RADIUS);
+    renderCylinder(gl, start, end, NUMOFSIDES, RADIUS);
   }
   var model = polyLineToOrthoCylindersModel(vertices);
-  renderCylinders(gl, model);
+  //renderCylinders(gl, model);
 
   var n = initVertexBuffers(gl, vertices);
   gl.drawArrays(gl.LINE_STRIP, 0, n);
@@ -543,28 +545,45 @@ function initAttributes(gl) {
 // }
 
 function renderCylinder(gl, start, end, numberOfSides, radius){
-  var cylinder = new OrthoCylinder(start, end, radius, numberOfSides);
-  var cylinders = [];
-  cylinders.push(cylinder);
-  initVertexBuffer(gl);
-  initIndexBuffer(gl);
-  initAttributes(gl);
-  initIndexBuffer(gl);
-  //For loop of faces
+
+    let color = new Vector3([0, 1, 0]);
+    let lightColor = new Vector3([1, 1, 1]);
+    let lightPosition = new Vector3([1, 1, ,1]);
+    let lightSource = new LightSource(lightColor, lightPosition, 0.5); //intensity is 0.5
+    var cylinder = new ColoredCylinder(start, end, radius, numberOfSides, color, lightSource);
+    var cylinders = [];
+    //cylinders.push(cylinder);
+    initVertexBuffer(gl);
+    initIndexBuffer(gl);
+    initAttributes(gl);
+    initIndexBuffer(gl);
+    //For loop of faces
   
-  console.log("First face: ");
+    console.log("First face: ");
   // console.log(cylinder.faces[0]);
   // for(var i = 0; i < cylinder.faces.length; i++){
   //   drawFace(gl, cylinder.faces[i]);
   // }
-  var cylinderModel = new OrthoCylindersModel(cylinders);
-  setVertexBuffer(gl, new Float32Array(cylinderModel.vertices));
-  console.log(cylinderModel);
-  setIndexBuffer(gl, new Uint16Array(cylinderModel.indices));
+//   var cylinderModel = new OrthoCylindersModel(cylinders);
+    setVertexBuffer(gl, new Float32Array(cylinder.getVertBuffer()));
+//   console.log(cylinderModel);
+    setIndexBuffer(gl, new Uint16Array(cylinder.getIndexBuffer()));
   //setIndexBuffer(gl, new Uint16Array([0, 1, 2]));
-  gl.drawElements(gl.LINE_STRIP, cylinderModel.indices.length, gl.UNSIGNED_SHORT, 0);
-  console.log("CYLINDER !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-  console.log(cylinder);
+    gl.drawElements(gl.LINE_STRIP, cylinder.indices.length, gl.UNSIGNED_SHORT, 0);
+    renderNormals(gl, cylinder.getNormalLines());
+    console.log("CYLINDER !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+    console.log(cylinder);
+}
+function renderNormals(gl, normalLines){
+    let indexBuff = [];
+    for(let i = 0; i < normalLines.length/3; i++){
+        indexBuff.push(i);
+    }
+    console.log("Normal lines:");
+    console.log(normalLines);
+    setVertexBuffer(gl, new Float32Array(normalLines));
+    setIndexBuffer(gl, new Uint16Array(indexBuff));
+    gl.drawElements(gl.LINES, indexBuff.length, gl.UNSIGNED_SHORT, 0);
 }
 
 function renderCylinders(gl, model){
@@ -583,10 +602,6 @@ function polyLineToOrthoCylindersModel(vertices){
   for(var i = 0; i < vertices.length - 3; i += 2){
     var start = new Vector3([vertices[i], vertices[i + 1], 0]);
     var end = new Vector3([vertices[i + 2], vertices[i + 3], 0]);
-    // console.log("Start: ");
-    // console.log(start);
-    // console.log("End: ");
-    // console.log(end);
     var cylinder = new OrthoCylinder(start, end, RADIUS, NUMOFSIDES);
     cylinders.push(cylinder);
   }
@@ -622,3 +637,24 @@ function updateScreen(canvas, gl) {
   gl.drawElements(gl.LINE_STRIP, sor.indexes.length, gl.UNSIGNED_SHORT, 0);
 }
 
+function initArrayBuffer(gl, data, num, type, attribute) {
+    var buffer = gl.createBuffer();   // Create a buffer object
+    if (!buffer) {
+      console.log('Failed to create the buffer object');
+      return false;
+    }
+    // Write date into the buffer object
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+    // Assign the buffer object to the attribute variable
+    var a_attribute = gl.getAttribLocation(gl.program, attribute);
+    if (a_attribute < 0) {
+      console.log('Failed to get the storage location of ' + attribute);
+      return false;
+    }
+    gl.vertexAttribPointer(a_attribute, num, type, false, 0, 0);
+    // Enable the assignment of the buffer object to the attribute variable
+    gl.enableVertexAttribArray(a_attribute);
+  
+    return true;
+  }

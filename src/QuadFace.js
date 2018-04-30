@@ -13,6 +13,7 @@ class QuadFace {
         this.setIndices();
         this.setNormal();
         //this.setNormalLines();
+        this.normalLines = [];
     }
 
     getIndices(){
@@ -37,13 +38,19 @@ class QuadFace {
         this.normalLines = [];
         let normalVector = VectorLibrary.scaleVector(normalSize, this.normal);
         //let normalVectors = [];
-        for(let i = 0; i < this.vertices.lenght; i++){
-            let startPoint = this.vertices[i].elements;
-            let endPoint = VectorLibrary.translatePoint(startPoint, normalVector).elements;
-            this.normalLines.push(startPoint.x);this.normalLines.push(startPoint.y);this.normalLines.push(startPoint.z);
-            this.normalLines.push(endPoint.x);this.normalLines.push(endPoint.y);this.normalLines.push(endPoint.z); 
+        for(let i = 0; i < this.vertices.length; i++){
+            let startPointVector = this.vertices[i];
+            let startPoint = startPointVector.elements;
+            let endPoint = VectorLibrary.translatePoint(startPointVector, normalVector).elements;
+            this.normalLines.push(startPoint[0]);this.normalLines.push(startPoint[1]);this.normalLines.push(startPoint[2]);
+            this.normalLines.push(endPoint[0]);this.normalLines.push(endPoint[1]);this.normalLines.push(endPoint[2]); 
         }
         
+    }
+
+    getNormalLines(normalSize = 0.01){
+        this.setNormalLines(normalSize);
+        return this.normalLines;
     }
 
 }

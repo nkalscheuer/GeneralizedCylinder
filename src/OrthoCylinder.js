@@ -23,6 +23,10 @@ class OrthoCylinder {
         this.endVerts = VectorLibrary.copyVectorArr(this.poly.vertices);
         VectorLibrary.printVectorArr(this.endVerts);
         this.setFaces();
+        this.vertices = [];
+        this.indices = [];
+        this.normalLines = [];
+        this.normalSize = 0;
     }
 
     //For connections
@@ -41,11 +45,12 @@ class OrthoCylinder {
     }
 
     concatVertices(){
+        console.log("Concatentating vertices");
         this.vertices = [];
         this.indices = [];
         for(var j = 0; j < this.faces.length; j++){
             var faceOffset = j * this.faces[j].vertices.length;
-            var vertexOffset = faceOffset + cylinderOffset;
+            var vertexOffset = faceOffset;
             for(var k = 0; k < this.faces[j].indices.length; k++){
               this.indices.push(this.faces[j].indices[k] + vertexOffset);
             }
@@ -61,15 +66,25 @@ class OrthoCylinder {
     }
 
     getVertBuffer(){
-        if(this.vertices != "undefined"){
+        if(this.vertices.length == 0){
             this.concatVertices();
         }
         return this.vertices;
     }
     getIndexBuffer(){
-        if(this.indices != "undefined"){
+        if(this.indices == 0){
             this.concatVertices();
         }
         return this.indices;
+    }
+    getNormalLines(length = 0.1){
+        if(this.normalSize != length || this.normalLines.length == 0){
+            this.normalSize = length;
+            this.normalLines = [];
+            for(let i = 0; i < this.faces.length; i++){
+                this.normalLines = this.normalLines.concat(this.faces[i].getNormalLines(length));
+            }
+        }
+        return this.normalLines;
     }
 }
