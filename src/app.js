@@ -5,7 +5,8 @@ var VSHADER_SOURCE =
   'varying vec4 v_Color;\n' +
   'uniform mat4 u_MvpMatrix;\n' +
   'void main() {\n' +
-  '  gl_Position = u_MvpMatrix * a_Position;\n' +
+  '  gl_Position = a_Position;\n' +
+  '  gl_Position = a_Position;\n' +
   '  gl_PointSize = a_PointSize;\n' +
   '  v_Color = a_Color;\n' +
   '}\n';
@@ -30,11 +31,16 @@ var colorArr = [];
 var scoreBoard = [];
 var u_FragColor;
 var MAXPOINTS = 4;
-var NUMOFSIDES = 4;
+var NUMOFSIDES = 12;
 var RADIUS = 0.1;
 var cylindersModels = [];
 var cylindersModelIndex;
 var normalLineFlag = false;
+var translateX = 0;
+var translateY = 0;
+var translateZ = 0;
+
+var mainLightSource = new LightSource(new Vector3([1, 1, 1]), new Vector3([1, 1, 1]), 2);
 //var gl;
 function main() {
   // Retrieve <canvas> element
@@ -65,18 +71,22 @@ function main() {
   }
 
   // Get the storage location of u_MvpMatrix
-  var u_MvpMatrix = gl.getUniformLocation(gl.program, 'u_MvpMatrix');
-  if (!u_MvpMatrix) {
-    console.log('Failed to get the storage location of u_MvpMatrix');
-    return;
-  }
-  // Set the eye point and the viewing volume
-  var mvpMatrix = new Matrix4();
-  mvpMatrix.setPerspective(30, 1, 1, 100);
-  mvpMatrix.lookAt(3, 3, 7, 0, 0, 0, 0, 1, 0);
+//   var u_MvpMatrix = gl.getUniformLocation(gl.program, 'u_MvpMatrix');
+//   if (!u_MvpMatrix) {
+//     console.log('Failed to get the storage location of u_MvpMatrix');
+//     return;
+//   }
+//   // Set the eye point and the viewing volume
+//   var mvpMatrix = new Matrix4();
+//   mvpMatrix.setTranslate(0.5, 0, 0);
+//   var orthoMatrix = new Matrix4();
+//   orthoMatrix.setOrtho(-1, 1, -1, 1, 1, -1);
+//   mvpMatrix.multiply(orthoMatrix);
+// //   mvpMatrix.setPerspective(30, 1, 1, 100);
+// //   mvpMatrix.lookAt(3, 3, 7, 0, 0, 0, 0, 1, 0);
 
-  // Pass the model view projection matrix to u_MvpMatrix
-  gl.uniformMatrix4fv(u_MvpMatrix, false, mvpMatrix.elements);
+//   // Pass the model view projection matrix to u_MvpMatrix
+//   gl.uniformMatrix4fv(u_MvpMatrix, false, mvpMatrix.elements);
   
   // Register event handlers
   //Click and mouse move
@@ -106,6 +116,10 @@ function main() {
 
   document.getElementById('normalLines').onclick = function(ev){normalLinesToggle(ev, gl)};
 
+  document.getElementById('translateX').onchange = function(ev){translateXSlider(ev, gl)};
+
+  document.getElementById('lightX').onchange = function(ev){lightXSlider(ev, gl)};
+  document.getElementById('lightRotate').onchange = function(ev){rotateLightSlider(ev, gl)};
   setupIOSOR("fileinput");
 
   //Delete functions
@@ -128,7 +142,7 @@ function main() {
   // Clear <canvas>
   gl.clear(gl.COLOR_BUFFER_BIT);
 
-
+  
   var startPoint = new Vector3([-0.5, 0, 0]);
   var endPoint = new Vector3([0.5, 0, 0]);
   renderPolyLine(gl, [0.5, 0, -0.5, 0]);
@@ -586,11 +600,12 @@ function renderCylinder(gl, start, end, numberOfSides, radius){
     let lightColor = new Vector3([1, 1, 1]);
     let lightPosition = new Vector3([1, 1, 1]);
     let upVector = new Vector3([0, 0, 1]);
-    let lightSource = new LightSource(lightColor, lightPosition, 1); //intensity is 0.5
-    var cylinder = new ColoredCylinder(start, end, radius, numberOfSides,upVector, color, lightSource);
+    let lightSource = new LightSource(lightColor, lightPosition, 2); //intensity is 0.5
+    var cylinder = new ColoredCylinder(start, end, radius, numberOfSides,upVector, color, mainLightSource);
     var cylinders = [];
-    var colors = cylinder.getColoredBuffer(lightSource);
+    var colors = cylinder.getColoredBuffer(mainLightSource);
     var vertices = cylinder.getVertBuffer();
+    translateVertexBuffer(translateX, translateY, translateZ, vertices);
     var indices = cylinder.getIndexBuffer();
     console.log("Colored Buffer");
     console.log(colors);
@@ -765,3 +780,41 @@ function initArrayBuffer(gl, data, num, type, attribute) {
     }
     console.log(ev);
   }
+  function translateXSlider(ev, gl){
+      translateX = ev.target.value / 100;
+      renderClickScene(gl);
+  }
+  function translateVertexBuffer(x, y, z, vertexBuffer){
+      console.log("Translating");
+      console.log(vertexBuffer);
+      for(let i = 0; i < vertexBuffer.length - 2; i +=3){
+          vertexBuffer[i] += x;
+          vertexBuffer[i + 1] += y;
+          vertexBuffer[i+2] += z;
+      }
+      console.log(vertexBuffer);
+  }
+  function lightXSlider(ev, gl){
+      translateLight(ev.target.value/100, 0, 0);
+      renderClickScene(gl);
+  }
+  function translateLight(x, y, z){
+    mainLightSource.location.elements[0] = 1 + x;
+    mainLightSource.location.elements[1] = 1 + y;
+    mainLightSource.location.elements[2] = 1 + z;
+  }
+
+  function rotateLightSlider(ev, gl){
+    rotateLight(ev, gl);
+    rotateLight(ev.target.value);
+    renderClickScene(gl);
+  }
+  function rotateLight(degrees){
+      let rotateMatrix = new Matrix4();
+      rotateMatrix.setRotate(degrees, 0, 1, 0);
+      //Resetting back
+      mainLightSource.location.elements[0] = 1; mainLightSource.location.elements[1] = 1; mainLightSource.location.elements[2] = 1; 
+      mainLightSource.location = rotateMatrix.multiplyVector3(mainLightSource.location);
+  }
+
+  
