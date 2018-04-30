@@ -40,7 +40,7 @@ var translateX = 0;
 var translateY = 0;
 var translateZ = 0;
 
-var mainLightSource = new LightSource(new Vector3([1, 1, 1]), new Vector3([1, 1, 1]), 2);
+var mainLightSource = new LightSource(new Vector3([1, 1, 1]), new Vector3([1, 1, 1]), 1);
 //var gl;
 function main() {
   // Retrieve <canvas> element
