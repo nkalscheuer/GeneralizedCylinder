@@ -26,6 +26,7 @@ class OrthoCylinder {
         this.vertices = [];
         this.indices = [];
         this.normalLines = [];
+        this.normalVectors = [];
         this.normalSize = 0;
     }
 
@@ -40,7 +41,7 @@ class OrthoCylinder {
         this.faces = [];
         for(var i = 0; i < this.numOfSides; i++){
             var nextIndex = (i+1) % this.numOfSides;
-            this.faces.push(new QuadFace(this.endVerts[i], this.startVerts[i], this.startVerts[nextIndex], this.endVerts[nextIndex]));
+            this.faces.push(new QuadFace(this.endVerts[i], this.startVerts[i], this.startVerts[nextIndex], this.endVerts[nextIndex], 0.1, this.start, this.end));
         }
     }
 
@@ -49,14 +50,17 @@ class OrthoCylinder {
         this.vertices = [];
         this.indices = [];
         for(var j = 0; j < this.faces.length; j++){
+            //For each face
             var faceOffset = j * this.faces[j].vertices.length;
             var vertexOffset = faceOffset;
             for(var k = 0; k < this.faces[j].indices.length; k++){
               this.indices.push(this.faces[j].indices[k] + vertexOffset);
             }
+            var faceNormals = this.faces[j].getNormalVectors();
             for(var l = 0; l < this.faces[j].vertices.length; l++){
                 for(var m = 0; m < this.faces[j].vertices[l].elements.length; m++){
-                 this.vertices.push(this.faces[j].vertices[l].elements[m]);
+                    this.vertices.push(this.faces[j].vertices[l].elements[m]);
+                    this.normalVectors.push(faceNormals[l].elements[m]);
                 }
             }
         }

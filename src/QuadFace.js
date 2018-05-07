@@ -4,7 +4,7 @@ class QuadFace {
     //|  |
     //|  |
     //b--c
-    constructor(a, b, c, d, normalSize){
+    constructor(a, b, c, d, normalSize, start, end){
         this.vertices = [];
         this.vertices.push(a);
         this.vertices.push(b);
@@ -14,6 +14,10 @@ class QuadFace {
         this.setNormal();
         //this.setNormalLines();
         this.normalLines = [];
+        this.normalVectors = [];
+        this.start = start;
+        this.end = end;
+        this.setNormalVectors();
     }
 
     getIndices(){
@@ -48,10 +52,25 @@ class QuadFace {
         }
         
     }
+    setNormalVectors(){
+        this.normalVectors.push(VectorLibrary.getVector(this.end, this.vertices[0]));
+        this.normalVectors.push(VectorLibrary.getVector(this.start, this.vertices[1]));
+        this.normalVectors.push(VectorLibrary.getVector(this.start, this.vertices[2]));
+        this.normalVectors.push(VectorLibrary.getVector(this.end, this.vertices[3]));
+        for(let i = 0; i < this.normalVectors.length; i++){
+            this.normalVectors[i].normalize();
+        }
+    }
 
     getNormalLines(normalSize = 0.01){
         this.setNormalLines(normalSize);
         return this.normalLines;
+    }
+    getNormalVectors(){
+        if(this.normalVectors.length == 0){
+            return -1;
+        }
+        return this.normalVectors;
     }
     getColor(color, lightSource){
         console.log(this.vertices[0]);
