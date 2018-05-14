@@ -13,12 +13,12 @@ class ColoredCylinder extends OrthoCylinder {
             //console.log("Cylinder color: ");
             //console.log(this.color);
             let faceColor = face.getColor(this.color, lightSource).elements;
-            console.log("FaceColor");
-            console.log(faceColor);
+            // console.log("FaceColor");
+            // console.log(faceColor);
             //setting the same color to every vertex of a face
             for(let j = 0; j < face.vertices.length; j++){
-                coloredBuffer.push(faceColor[0]);coloredBuffer.push(faceColor[1]);coloredBuffer.push(faceColor[2]);
-                //coloredBuffer.push(0);coloredBuffer.push(1);coloredBuffer.push(0);
+                //coloredBuffer.push(faceColor[0]);coloredBuffer.push(faceColor[1]);coloredBuffer.push(faceColor[2]);
+                coloredBuffer.push(0);coloredBuffer.push(1);coloredBuffer.push(0);
             }
         }
         return coloredBuffer;

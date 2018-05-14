@@ -92,4 +92,7 @@ class OrthoCylinder {
         }
         return this.normalLines;
     }
+    getNormalVectors(){
+        return this.normalVectors;
+    }
 }

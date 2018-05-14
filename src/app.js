@@ -1,26 +1,97 @@
-var VSHADER_SOURCE =
-  'attribute float a_PointSize;\n' +
-  'attribute vec4 a_Color;\n' +
-  'attribute vec4 a_Position;\n' +
-  'varying vec4 v_Color;\n' +
-  'uniform mat4 u_MvpMatrix;\n' +
-  'void main() {\n' +
-  '  gl_Position = a_Position;\n' +
-  '  gl_Position = a_Position;\n' +
-  '  gl_PointSize = a_PointSize;\n' +
-  '  v_Color = a_Color;\n' +
-  '}\n';
+// var VSHADER_SOURCE =
+//   'attribute float a_PointSize;\n' +
+//   'attribute vec4 a_Color;\n' +
+//   'attribute vec4 a_Position;\n' +
+//   'varying vec4 v_Color;\n' +
+//   'uniform mat4 u_MvpMatrix;\n' +
+//   'void main() {\n' +
+//   '  gl_Position = a_Position;\n' +
+//   '  gl_Position = a_Position;\n' +
+//   '  gl_PointSize = a_PointSize;\n' +
+//   '  v_Color = a_Color;\n' +
+//   '}\n';
+
+  var VSHADER_SOURCE = `
+  #ifdef GL_ES
+    precision mediump float;
+    #endif
+  attribute float a_PointSize;
+  attribute vec4 a_Color;
+  varying vec4 v_Color;
+  attribute vec4 a_Normal;
+  varying vec3 v_Normal;
+  attribute vec4 a_Position;
+  varying vec4 v_Position;
+  uniform mat4 u_MvpMatrix;
+  uniform mat4 u_NormalMatrix;
+  uniform vec3 u_DiffuseColor;
+  uniform vec3 u_LightPosition;
+  uniform vec3 u_AmbientLight;
+  uniform vec3 u_SpecularColor;
+  uniform float u_Shader;
+  void main() {
+    //Shared changes
+    gl_Position = a_Position;
+    gl_PointSize = a_PointSize;
+    v_Normal = vec3(a_Normal);
+    v_Position = a_Position;
+    //Goraud shading
+    if(u_Shader == 0.0){
+      vec3 lightDirection = normalize(u_LightPosition - vec3(v_Position));
+      float nDotL = max(dot(lightDirection, v_Normal), 0.0);
+      vec3 diffuse = u_DiffuseColor * a_Color.rgb * nDotL;
+      vec3 ambient = u_AmbientLight * a_Color.rgb;
+      v_Color = vec4(diffuse + ambient, a_Color.a);
+    }else if(u_Shader == 1.0){
+      v_Color = a_Color;
+    }
+    
+  }
+  `;
+ 
   
 
 
-var FSHADER_SOURCE =
-    '#ifdef GL_ES\n' +
-    'precision mediump float;\n' +
-    '#endif\n' +
-    'varying vec4 v_Color;\n' + 
-    'void main() {\n' +
-    '  gl_FragColor = v_Color;\n' +
-    '}\n';
+// var FSHADER_SOURCE =
+//     '#ifdef GL_ES\n' +
+//     'precision mediump float;\n' +
+//     '#endif\n' +
+//     'varying vec4 v_Color;\n' + 
+//     'void main() {\n' +
+//     '  gl_FragColor = v_Color;\n' +
+//     '}\n';
+
+var FSHADER_SOURCE = `
+    #ifdef GL_ES
+    precision mediump float;
+    #endif
+    uniform float u_Shader;
+    varying vec4 v_Color; 
+    varying vec3 v_Normal;
+    varying vec4 v_Position;
+    uniform vec3 u_DiffuseColor;
+    uniform vec3 u_LightPosition;
+    uniform vec3 u_AmbientLight;
+    uniform vec3 u_SpecularColor;
+    uniform float u_SpecularExponent;
+    void main() {
+      if(u_Shader == 0.0){
+        //Goraud Shading
+        gl_FragColor = v_Color;
+      }else if(u_Shader == 1.0){
+        //Phong Shading
+        vec3 lightDirection = normalize(u_LightPosition - vec3(v_Position));
+        float nDotL = max(dot(lightDirection, v_Normal), 0.0);
+        vec3 diffuse = u_DiffuseColor * v_Color.rgb * nDotL;
+        vec3 ambient = u_AmbientLight * v_Color.rgb;
+        vec3 reflectionVector = normalize(2.0 * nDotL * v_Normal - lightDirection);
+        vec3 orthoEyeVector = vec3(0.0, 0.0, -1.0);
+        //vec3 specular = vec3(v_Color) * u_SpecularColor * pow(max(dot(reflectionVector, orthoEyeVector), 0.0), u_SpecularExponent);
+        vec3 specular = u_SpecularColor * pow(max(dot(reflectionVector, orthoEyeVector), 0.0), u_SpecularExponent);
+        gl_FragColor = vec4(diffuse + ambient + specular, v_Color.a);
+      }
+    }
+`;
 
 var FSIZE = (new Float32Array()).BYTES_PER_ELEMENT;
 var pauseState = false;
@@ -87,6 +158,8 @@ function main() {
 
 //   // Pass the model view projection matrix to u_MvpMatrix
 //   gl.uniformMatrix4fv(u_MvpMatrix, false, mvpMatrix.elements);
+
+  setLights(gl);
   
   // Register event handlers
   //Click and mouse move
@@ -131,6 +204,15 @@ function main() {
   var colorChanger = document.getElementById("colorChanger");
   colorChanger.onchange = function(ev){ changeColor(ev, gl); };
   var rgb = hexToRgb(colorChanger.value);
+
+  document.onkeydown = function(ev){
+    if(ev.key == '0'){
+      changeShader(gl, 0);
+    }else if(ev.key == '1'){
+      //
+      changeShader(gl, 1);
+    }
+  }
   
   //Initializing color value
   gl.uniform4f(u_FragColor, rgb[0], rgb[1], rgb[2], 1.0);
@@ -236,7 +318,6 @@ function changeColor(ev, gl){
 
 //Adding a new polyline
 function newPolyLine(){
-  console.log("")
   var polyLine = [];
   polyLineArr.push(polyLine);
   //console.log("PolylineArr length: " + polyLineArr.length);
@@ -607,12 +688,13 @@ function renderCylinder(gl, start, end, numberOfSides, radius){
     var vertices = cylinder.getVertBuffer();
     translateVertexBuffer(translateX, translateY, translateZ, vertices);
     var indices = cylinder.getIndexBuffer();
-    console.log("Colored Buffer");
-    console.log(colors);
-    console.log("Vertex Buffer: ");
-    console.log(vertices);
-    console.log("Indices");
-    console.log(indices);
+    var normals = cylinder.getNormalVectors();
+    // console.log("Colored Buffer");
+    // console.log(colors);
+    // console.log("Vertex Buffer: ");
+    // console.log(vertices);
+    // console.log("Indices");
+    // console.log(indices);
 
     // initVertexBuffer(gl);
     // initIndexBuffer(gl);
@@ -646,6 +728,10 @@ function renderCylinder(gl, start, end, numberOfSides, radius){
 
     if (!initArrayBuffer(gl, new Float32Array(colors), 3, gl.FLOAT, 'a_Color'))
         return -1;
+    
+    
+    if (!initArrayBuffer(gl, new Float32Array(normals), 3, gl.FLOAT, 'a_Normal'))
+        return -1;
 
     // Write the indices to the buffer object
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
@@ -654,8 +740,8 @@ function renderCylinder(gl, start, end, numberOfSides, radius){
     if(normalLineFlag){
         renderNormals(gl, cylinder.getNormalLines());
     }
-    console.log("CYLINDER !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-    console.log(cylinder);
+    // console.log("CYLINDER !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+    // console.log(cylinder);
 }
 function renderNormals(gl, normalLines){
     let indexBuff = [];
@@ -679,7 +765,8 @@ function renderNormals(gl, normalLines){
 
     if (!initArrayBuffer(gl, new Float32Array(colors), 3, gl.FLOAT, 'a_Color'))
         return -1;
-
+    
+    
     // Write the indices to the buffer object
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indexBuff), gl.STATIC_DRAW);
@@ -785,14 +872,14 @@ function initArrayBuffer(gl, data, num, type, attribute) {
       renderClickScene(gl);
   }
   function translateVertexBuffer(x, y, z, vertexBuffer){
-      console.log("Translating");
-      console.log(vertexBuffer);
+      // console.log("Translating");
+      // console.log(vertexBuffer);
       for(let i = 0; i < vertexBuffer.length - 2; i +=3){
           vertexBuffer[i] += x;
           vertexBuffer[i + 1] += y;
           vertexBuffer[i+2] += z;
       }
-      console.log(vertexBuffer);
+      // console.log(vertexBuffer);
   }
   function lightXSlider(ev, gl){
       translateLight(ev.target.value/100, 0, 0);
@@ -802,11 +889,13 @@ function initArrayBuffer(gl, data, num, type, attribute) {
     mainLightSource.location.elements[0] = 1 + x;
     mainLightSource.location.elements[1] = 1 + y;
     mainLightSource.location.elements[2] = 1 + z;
+     
   }
 
   function rotateLightSlider(ev, gl){
     rotateLight(ev, gl);
     rotateLight(ev.target.value);
+    setLightPosition(gl, mainLightSource.location);
     renderClickScene(gl);
   }
   function rotateLight(degrees){
@@ -817,4 +906,65 @@ function initArrayBuffer(gl, data, num, type, attribute) {
       mainLightSource.location = rotateMatrix.multiplyVector3(mainLightSource.location);
   }
 
-  
+  function setLights(gl){
+    var u_DiffuseColor = gl.getUniformLocation(gl.program, 'u_DiffuseColor');
+    var u_LightPosition = gl.getUniformLocation(gl.program, 'u_LightPosition');
+    var u_AmbientLight = gl.getUniformLocation(gl.program, 'u_AmbientLight');
+
+     // Set the light color (white)
+    gl.uniform3f(u_DiffuseColor, 1.0, 1.0, 1.0);
+    // Set the light direction (in the world coordinate)
+    gl.uniform3f(u_LightPosition, 1.0, 1.0, 1.0);
+    // Set the ambient light
+    gl.uniform3f(u_AmbientLight, 0.0, 0.0, 0.2);
+
+    //Set specular exponent
+    setSpecularColor(gl, 0.8, 0.8, 0.8);
+    setSpecularExponent(gl, 20.0);
+  }
+
+  function setDiffuse(gl, r, g, b){
+    var u_DiffuseColor = gl.getUniformLocation(gl.program, 'u_DiffuseColor');
+    gl.uniform3f(u_DiffuseColor, r, g, b);
+
+  }
+  function setLightPosition(gl, position){
+    var el = position.elements;
+    var u_LightPosition = gl.getUniformLocation(gl.program, 'u_LightPosition');
+    gl.uniform3f(u_LightPosition, el[0], el[1], el[2]);
+  }
+  function setAmbient(gl, r, g, b){
+    var u_AmbientLight = gl.getUniformLocation(gl.program, 'u_AmbientLight');
+    gl.uniform3f(u_AmbientLight, r, g, b);
+  }
+  function setShader(gl, shader){
+    var u_Shader = gl.getUniformLocation(gl.program, 'u_Shader');
+    gl.uniform1f(u_Shader, shader);
+  }
+  function setSpecularColor(gl, r, g, b){
+    var u_SpecularColor = gl.getUniformLocation(gl.program, 'u_SpecularColor');
+    gl.uniform3f(u_SpecularColor, r, g, b);
+  }
+  function setSpecularExponent(gl, exponent){
+    var u_SpecularExponent = gl.getUniformLocation(gl.program, 'u_SpecularExponent');
+    gl.uniform1f(u_SpecularExponent, exponent);
+  }
+  function setEyeVector(gl, eyePosition){
+    var u_EyeVector = gl.getUniformLocation(gl.program, 'u_EyeVector');
+    gl.uniform3f(u_EyeVector, eyePosition);
+  }
+  function changeShader(gl, shader, render=true){
+    //Set shader
+    setShader(gl, shader);
+    //Change label
+    var shaderLabel = document.getElementById('shader');
+    if(shader == 0){
+      shaderLabel.innerHTML = "Goraud";
+    }else if(shader == 1){
+      shaderLabel.innerHTML = "Phong";
+    }
+    //Rerender
+    if(render){
+      renderClickScene(gl);
+    }
+  }

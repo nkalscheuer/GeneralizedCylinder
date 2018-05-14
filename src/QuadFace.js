@@ -73,18 +73,18 @@ class QuadFace {
         return this.normalVectors;
     }
     getColor(color, lightSource){
-        console.log(this.vertices[0]);
-        console.log(lightSource);
+        // console.log(this.vertices[0]);
+        // console.log(lightSource);
         let lightVector = VectorLibrary.getVector(this.vertices[0], lightSource.location).normalize();
-        console.log(lightVector);
-        console.log(this.normal);
+        // console.log(lightVector);
+        // console.log(this.normal);
         let dotProduct = VectorLibrary.dotProduct(lightVector, this.normal);
-        console.log("Dot product:");
-        console.log(dotProduct);
+        // console.log("Dot product:");
+        // console.log(dotProduct);
         let cosine = Math.max(dotProduct, 0);
         let coe = lightSource.intensity * cosine;
-        console.log("Coefficient: ");
-        console.log(coe);
+        // console.log("Coefficient: ");
+        // console.log(coe);
         // let r = coe * color[0];
         // let g = coe * color[1];
         // let b = coe * color[2];
