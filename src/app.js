@@ -40,9 +40,9 @@
       vec3 lightDirection = normalize(u_LightPosition - vec3(v_Position));
       float nDotL = max(dot(lightDirection, v_Normal), 0.0);
       vec3 diffuse = u_DiffuseColor * a_Color.rgb * nDotL;
-      vec3 ambient = u_AmbientLight * a_Color.rgb;
+      vec3 ambient = u_AmbientLight;
       v_Color = vec4(diffuse + ambient, a_Color.a);
-    }else if(u_Shader == 1.0){
+    }else if(u_Shader == 1.0 || u_Shader == 2.0){
       v_Color = a_Color;
     }
     
@@ -74,6 +74,22 @@ var FSHADER_SOURCE = `
     uniform vec3 u_AmbientLight;
     uniform vec3 u_SpecularColor;
     uniform float u_SpecularExponent;
+    float celColor(in float colorVal){
+      if(colorVal >= 1.0 ){
+        return 1.0;
+      }else if (colorVal >= 0.8){
+        return 0.8;
+      }else if (colorVal >= 0.6){
+        return 0.6;
+      }else if (colorVal >= 0.4){
+        return 0.4;
+      }else if(colorVal >= 0.1){
+        return 0.1;
+      }else if(colorVal >= 0.0 || colorVal < 0.0){
+        return 0.0;
+      }
+      return 0.0;
+    }
     void main() {
       if(u_Shader == 0.0){
         //Goraud Shading
@@ -83,14 +99,30 @@ var FSHADER_SOURCE = `
         vec3 lightDirection = normalize(u_LightPosition - vec3(v_Position));
         float nDotL = max(dot(lightDirection, v_Normal), 0.0);
         vec3 diffuse = u_DiffuseColor * v_Color.rgb * nDotL;
-        vec3 ambient = u_AmbientLight * v_Color.rgb;
+        vec3 ambient = u_AmbientLight;
         vec3 reflectionVector = normalize(2.0 * nDotL * v_Normal - lightDirection);
         vec3 orthoEyeVector = vec3(0.0, 0.0, -1.0);
         //vec3 specular = vec3(v_Color) * u_SpecularColor * pow(max(dot(reflectionVector, orthoEyeVector), 0.0), u_SpecularExponent);
         vec3 specular = u_SpecularColor * pow(max(dot(reflectionVector, orthoEyeVector), 0.0), u_SpecularExponent);
         gl_FragColor = vec4(diffuse + ambient + specular, v_Color.a);
+      } else if (u_Shader == 2.0){
+        //Cel Shading
+        vec3 lightDirection = normalize(u_LightPosition - vec3(v_Position));
+        float nDotL = max(dot(lightDirection, v_Normal), 0.0);
+        vec3 diffuse = u_DiffuseColor * v_Color.rgb * nDotL;
+        vec3 ambient = u_AmbientLight;
+        vec3 reflectionVector = normalize(2.0 * nDotL * v_Normal - lightDirection);
+        vec3 orthoEyeVector = vec3(0.0, 0.0, -1.0);
+        //vec3 specular = vec3(v_Color) * u_SpecularColor * pow(max(dot(reflectionVector, orthoEyeVector), 0.0), u_SpecularExponent);
+        vec3 specular = u_SpecularColor * pow(max(dot(reflectionVector, orthoEyeVector), 0.0), u_SpecularExponent);
+        vec4 resultColor = vec4(diffuse + ambient + specular, 1.0);
+        resultColor.r = celColor(resultColor.r);
+        resultColor.g = celColor(resultColor.g);
+        resultColor.b = celColor(resultColor.b);
+        gl_FragColor = resultColor;
       }
     }
+    
 `;
 
 var FSIZE = (new Float32Array()).BYTES_PER_ELEMENT;
@@ -169,11 +201,11 @@ function main() {
   //Disabling right click menu
   canvas.oncontextmenu = function(ev){ ev.preventDefault(); };
 
-  //Point size slider
-  var pointSizeChanger = document.getElementById("pointSizeChanger");
-  pointSizeChanger.onchange = function(ev){ pointSizeSliderChange(ev, gl); };
-  //Initializing point size
-  changePointSize(pointSizeChanger.value, gl);
+  // //Point size slider
+  // var pointSizeChanger = document.getElementById("pointSizeChanger");
+  // pointSizeChanger.onchange = function(ev){ pointSizeSliderChange(ev, gl); };
+  // //Initializing point size
+  // changePointSize(pointSizeChanger.value, gl);
 
   
   var radiusChanger = document.getElementById("radius");
@@ -205,12 +237,24 @@ function main() {
   colorChanger.onchange = function(ev){ changeColor(ev, gl); };
   var rgb = hexToRgb(colorChanger.value);
 
+  //Ambient
+  document.getElementById('ambientChanger').onchange = function(ev){ changAmbientColor(gl, hexToRgb(ev.target.value)) };
+
+  //Specular Color
+  document.getElementById('specularColorChanger').onchange = function(ev){ changeSpecularColor(gl, hexToRgb(ev.target.value)) };
+  
+  //Specular Exponent
+  document.getElementById('specularExponentChanger').onchange = function(ev){changeSpecularExponent(gl, ev.target.value)};
+  
   document.onkeydown = function(ev){
     if(ev.key == '0'){
       changeShader(gl, 0);
     }else if(ev.key == '1'){
       //
       changeShader(gl, 1);
+    }else if(ev.key == '2'){
+      //
+      changeShader(gl, 2);
     }
   }
   
@@ -962,8 +1006,28 @@ function initArrayBuffer(gl, data, num, type, attribute) {
       shaderLabel.innerHTML = "Goraud";
     }else if(shader == 1){
       shaderLabel.innerHTML = "Phong";
+    }else if(shader == 2){
+      shaderLabel.innerHTML = "Cel/Toon";
     }
     //Rerender
+    if(render){
+      renderClickScene(gl);
+    }
+  }
+  function changeSpecularExponent(gl, exponent, render=true){
+    setSpecularExponent(gl, exponent);
+    if(render){
+      renderClickScene(gl);
+    }
+  }
+  function changeSpecularColor(gl, color, render=true){
+    setSpecularColor(gl, color[0], color[1], color[2]);
+    if(render){
+      renderClickScene(gl);
+    }
+  }
+  function changAmbientColor(gl, color, render=true){
+    setAmbient(gl, color[0], color[1], color[2]);
     if(render){
       renderClickScene(gl);
     }

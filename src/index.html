@@ -1,7 +1,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>Assignment 2</title>
+    <title>Assignment 4</title>
     <script src="../lib/webgl-utils.js"></script>
     <script src="../lib/webgl-debug.js"></script>
     <script src="../lib/cuon-utils.js"></script>
@@ -23,19 +23,15 @@
     <canvas id="webgl" width="500" height="500">
     Please use a browser that supports "canvas"
     </canvas>
-    <h1>Shader:</h1><h1 id="shader"></h1>
-    <input type="file" id="fileinput" />
-    <button id="update_screen" type="button">Extract SOR</button>
-    <button id="save_canvas" type="button">Save</button>
-    <button id="reset_canvas" type="button">Reset Canvas</button>
+    <h1>Shader:</h1><h1 id="shader">Goraud</h1>
+    <input type="file" id="fileinput" style="display:none;"/>
+    <button id="update_screen" type="button" style="display:none;">Extract SOR</button>
+    <button id="save_canvas" type="button" style="display:none;">Save</button>
+    <button id="reset_canvas" type="button" style="display:none;">Reset Canvas</button>
     <div id="settings">
-        <div>
+        <div style="display:none;">
             <input type="checkbox" id="normalLines" />
             <label for="normalLines">Normal Lines:</label>
-        </div>
-        <div id="pointSize">
-            <h2>Change Point Size:</h2>
-            <input id="pointSizeChanger" type="range" min="3" max="25" value="10"/>
         </div>
         <div id="radius">
             <h2>Change Radius:</h2>
@@ -54,15 +50,24 @@
                 <h2>Rotate Light</h2>
                 <input id="lightRotate" type="range" min="0" max="360" value="0"/>
             <div>
-        <div>
-            <h2>Change color of Current PolyLine:</h2>
-            <input id="colorChanger" type="color" value="#FF0000"/>
+        <div style="display:none;">
+            <p>Change color of Current PolyLine:</p>
+            <input id="colorChanger" type="color" value="#FF0000" style="display:none;"/>
 
         </div>
         <div>
-            <button id="update_screen" type="button">Extract SOR</button>
-            <button id="save_canvas" type="button">Save</button>
-            <button id="reset_canvas" type="button">Reset Canvas</button>
+            <p>Change ambient color:</p>
+            <input id="ambientChanger" type="color" value="#FF0000"/>
+
+        </div>
+        <div>
+            <p>Change specular color:</p>
+            <input id="specularColorChanger" type="color" value="#FF0000"/>
+
+        </div>
+        <div>
+            <h2>Change Glossiness:</h2>
+            <input id="specularExponentChanger" type="range" min="1" max="50" value="10"/>
         </div>
         <div>
             <h2>Delete a PolyLine</h2>
