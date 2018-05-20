@@ -418,15 +418,15 @@ function renderClickScene(gl){
 
 //Renders a specific polyline
 function renderPolyLine(gl, vertices){
-  for(var i = 0; i < vertices.length - 3; i += 2){
-    var start = new Vector3([vertices[i], vertices[i + 1], 0]);
-    var end = new Vector3([vertices[i + 2], vertices[i + 3], 0]);
-    //console.log("Cylinders Model: ");
-    //console.log(cylindersModel);
-    renderCylinder(gl, start, end, NUMOFSIDES, RADIUS);
-  }
+  // for(var i = 0; i < vertices.length - 3; i += 2){
+  //   var start = new Vector3([vertices[i], vertices[i + 1], 0]);
+  //   var end = new Vector3([vertices[i + 2], vertices[i + 3], 0]);
+  //   //console.log("Cylinders Model: ");
+  //   //console.log(cylindersModel);
+  //   renderCylinder(gl, start, end, NUMOFSIDES, RADIUS);
+  // }
   var model = polyLineToOrthoCylindersModel(vertices);
-  //renderCylinders(gl, model);
+  renderCylinders(gl, model);
 
   //var n = initVertexBuffers(gl, vertices);
   //gl.drawArrays(gl.LINE_STRIP, 0, n);
@@ -827,13 +827,39 @@ function renderNormals(gl, normalLines){
 }
 
 function renderCylinders(gl, model){
-  initVertexBuffer(gl);
-  initIndexBuffer(gl);
-  initAttributes(gl);
-  setVertexBuffer(gl, new Float32Array(model.vertices));
-  //console.log(cylinderModel);
-  setIndexBuffer(gl, new Uint16Array(model.indices));
-  gl.drawElements(gl.TRIANGLES, model.indices.length, gl.UNSIGNED_SHORT, 0);
+  // // initVertexBuffer(gl);
+  // // initIndexBuffer(gl);
+  // // initAttributes(gl);
+  // // setVertexBuffer(gl, new Float32Array(model.vertices));
+  // // //console.log(cylinderModel);
+  // setIndexBuffer(gl, new Uint16Array(model.indices));
+  // gl.drawElements(gl.TRIANGLES, model.indices.length, gl.UNSIGNED_SHORT, 0);
+  var vertices = model.vertices;
+  var indices = model.indices;
+  var normals = model.normals;
+  var color = new Vector3([1, 0, 0]);
+  var colors = makeSolidColorBuffer(color, vertices.length);
+
+  var indexBuffer = gl.createBuffer();
+    if (!indexBuffer) 
+        return -1;
+
+    // Write the vertex coordinates and color to the buffer object
+    if (!initArrayBuffer(gl, new Float32Array(vertices), 3, gl.FLOAT, 'a_Position'))
+        return -1;
+
+    if (!initArrayBuffer(gl, new Float32Array(colors), 3, gl.FLOAT, 'a_Color'))
+        return -1;
+    
+    
+    if (!initArrayBuffer(gl, new Float32Array(normals), 3, gl.FLOAT, 'a_Normal'))
+        return -1;
+
+    // Write the indices to the buffer object
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
+    gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0);
+
 }
 
 function polyLineToOrthoCylindersModel(vertices){
