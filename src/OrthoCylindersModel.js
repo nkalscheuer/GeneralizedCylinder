@@ -2,6 +2,7 @@ class OrthoCylindersModel{
     constructor(cylinders){
        this.vertices = [];
        this.indices = [];
+       this.normals = [];
        
        for(var i = 0; i < cylinders.length; i++){
         //    console.log("Cylinder : " + i);
@@ -19,6 +20,7 @@ class OrthoCylindersModel{
                for(var l = 0; l < cylinders[i].faces[j].vertices.length; l++){
                    for(var m = 0; m < cylinders[i].faces[j].vertices[l].elements.length; m++){
                     this.vertices.push(cylinders[i].faces[j].vertices[l].elements[m]);
+                    this.normals.push(cylinders[i].faces[j].normalVectors[l].elements[m]);
                    }
                }
            }
@@ -36,6 +38,7 @@ class OrthoCylindersModel{
             for(var l = 0; l < cylinder.faces[j].vertices.length; l++){
                 for(var m = 0; m < cylinder.faces[j].vertices[l].elements.length; m++){
                  this.vertices.push(cylinder.faces[j].vertices[l].elements[m]);
+                 this.normals.push(cylinders[i].faces[j].normalVectors[l].elements[m]);
                 }
             }
         }
