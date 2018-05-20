@@ -147,6 +147,9 @@ var normalLineFlag = false;
 var translateX = 0;
 var translateY = 0;
 var translateZ = 0;
+var eyePosition = new Vector3();
+var lookAtCenter = new Vector3();
+var upVector = new Vector3([0, 1, 0]); //Up in the y direction
 
 var mainLightSource = new LightSource(new Vector3([1, 1, 1]), new Vector3([1, 1, 1]), 1);
 //var gl;
@@ -191,7 +194,7 @@ function main() {
 //   orthoMatrix.setOrtho(-1, 1, -1, 1, 1, -1);
 //   mvpMatrix.multiply(orthoMatrix);
   mvpMatrix.setPerspective(30, canvas.width/canvas.height, 1, 100);
-  mvpMatrix.lookAt(0, 0, 5, 0, 0, -100, 0, 1, 0);
+  mvpMatrix.lookAt(0, 0, 5, 0, 0, -10, 0, 1, 0);
 
   // Pass the model view projection matrix to u_MvpMatrix
   gl.uniformMatrix4fv(u_MvpMatrix, false, mvpMatrix.elements);
@@ -1036,4 +1039,15 @@ function initArrayBuffer(gl, data, num, type, attribute) {
     if(render){
       renderClickScene(gl);
     }
+  }
+  function setMvpMatrix(gl, eyePosition, center, up, near, far, viewAngle, ratio=1){
+    var mvpMatrix = new Matrix4();
+    var u_MvpMatrix = gl.getUniformLocation(gl.program, 'u_MvpMatrix');
+    mvpMatrix.setPerspective(viewAngle, ratio, near, far);
+    var eye = eyePosition.elements;
+    var point = center.elements;
+    var upVec = up.elements;
+    mvpMatrix.lookAt(eye[0], eye[1], eye[2], point[0], point[1], point[2], upVec[0], upVec[1], upVec[2]);
+    // Pass the model view projection matrix to u_MvpMatrix
+    gl.uniformMatrix4fv(u_MvpMatrix, false, mvpMatrix.elements);
   }
