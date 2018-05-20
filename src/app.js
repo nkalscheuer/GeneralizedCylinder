@@ -31,13 +31,15 @@
   uniform float u_Shader;
   void main() {
     //Shared changes
-    gl_Position = a_Position;
+    gl_Position = u_MvpMatrix * a_Position;
     gl_PointSize = a_PointSize;
     v_Normal = vec3(a_Normal);
-    v_Position = a_Position;
+    v_Position = u_MvpMatrix * a_Position;
+    
     //Goraud shading
     if(u_Shader == 0.0){
-      vec3 lightDirection = normalize(u_LightPosition - vec3(v_Position));
+      vec3 lightPosition = vec3(u_MvpMatrix * vec4(u_LightPosition, 1));  
+      vec3 lightDirection = normalize((lightPosition) - vec3(v_Position));
       float nDotL = max(dot(lightDirection, v_Normal), 0.0);
       vec3 diffuse = u_DiffuseColor * a_Color.rgb * nDotL;
       vec3 ambient = u_AmbientLight;
@@ -74,6 +76,7 @@ var FSHADER_SOURCE = `
     uniform vec3 u_AmbientLight;
     uniform vec3 u_SpecularColor;
     uniform float u_SpecularExponent;
+    uniform mat4 u_MvpMatrix;
     float celColor(in float colorVal){
       if(colorVal >= 1.0 ){
         return 1.0;
@@ -96,7 +99,8 @@ var FSHADER_SOURCE = `
         gl_FragColor = v_Color;
       }else if(u_Shader == 1.0){
         //Phong Shading
-        vec3 lightDirection = normalize(u_LightPosition - vec3(v_Position));
+        vec3 lightPosition = vec3(u_MvpMatrix * vec4(u_LightPosition, 1));
+        vec3 lightDirection = normalize(lightPosition - vec3(v_Position));
         float nDotL = max(dot(lightDirection, v_Normal), 0.0);
         vec3 diffuse = u_DiffuseColor * v_Color.rgb * nDotL;
         vec3 ambient = u_AmbientLight;
@@ -107,7 +111,8 @@ var FSHADER_SOURCE = `
         gl_FragColor = vec4(diffuse + ambient + specular, v_Color.a);
       } else if (u_Shader == 2.0){
         //Cel Shading
-        vec3 lightDirection = normalize(u_LightPosition - vec3(v_Position));
+        vec3 lightPosition = vec3(u_MvpMatrix * vec4(u_LightPosition, 1));
+        vec3 lightDirection = normalize(lightPosition - vec3(v_Position));
         float nDotL = max(dot(lightDirection, v_Normal), 0.0);
         vec3 diffuse = u_DiffuseColor * v_Color.rgb * nDotL;
         vec3 ambient = u_AmbientLight;
@@ -173,23 +178,23 @@ function main() {
     return;
   }
 
-  // Get the storage location of u_MvpMatrix
-//   var u_MvpMatrix = gl.getUniformLocation(gl.program, 'u_MvpMatrix');
-//   if (!u_MvpMatrix) {
-//     console.log('Failed to get the storage location of u_MvpMatrix');
-//     return;
-//   }
+  //Get the storage location of u_MvpMatrix
+  var u_MvpMatrix = gl.getUniformLocation(gl.program, 'u_MvpMatrix');
+  if (!u_MvpMatrix) {
+    console.log('Failed to get the storage location of u_MvpMatrix');
+    return;
+  }
 //   // Set the eye point and the viewing volume
-//   var mvpMatrix = new Matrix4();
+  var mvpMatrix = new Matrix4();
 //   mvpMatrix.setTranslate(0.5, 0, 0);
 //   var orthoMatrix = new Matrix4();
 //   orthoMatrix.setOrtho(-1, 1, -1, 1, 1, -1);
 //   mvpMatrix.multiply(orthoMatrix);
-// //   mvpMatrix.setPerspective(30, 1, 1, 100);
-// //   mvpMatrix.lookAt(3, 3, 7, 0, 0, 0, 0, 1, 0);
+  mvpMatrix.setPerspective(30, canvas.width/canvas.height, 1, 100);
+  mvpMatrix.lookAt(0, 0, 5, 0, 0, -100, 0, 1, 0);
 
-//   // Pass the model view projection matrix to u_MvpMatrix
-//   gl.uniformMatrix4fv(u_MvpMatrix, false, mvpMatrix.elements);
+  // Pass the model view projection matrix to u_MvpMatrix
+  gl.uniformMatrix4fv(u_MvpMatrix, false, mvpMatrix.elements);
 
   setLights(gl);
   
