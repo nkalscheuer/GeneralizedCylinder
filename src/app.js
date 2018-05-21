@@ -129,12 +129,12 @@ var FSHADER_SOURCE = `
         resultColor.b = celColor(resultColor.b);
         gl_FragColor = resultColor;
       }
-      if(u_AlphaMode == 1.0){
-        gl_FragColor = vec4(vec3(gl_FragColor), u_ObjectIndex/255.0);
-      }
       if(u_ClickedIndex == u_ObjectIndex){
         vec3 highlight = vec3(0.15, 0.15, 0.15);
         gl_FragColor = vec4(vec3(gl_FragColor) + highlight, 1.0); 
+      }
+      if(u_AlphaMode == 1.0){
+        gl_FragColor = vec4(vec3(gl_FragColor), u_ObjectIndex/255.0);
       }
     }
     
@@ -252,7 +252,7 @@ function main() {
   document.getElementById('clickMode').onchange = function(ev){clickModeChange(ev, gl)};
   //Delete functions
   var deleteButton = document.getElementById("deleteLine");
-  console.log(deleteButton);
+  //console.log(deleteButton);
   deleteButton.onmousedown = function(ev){ onDelete(ev, gl); };
  
   //Color changer
@@ -324,7 +324,7 @@ function click(ev, gl, canvas, a_Position) {
         setAlphaMode(gl, 1.0);
         renderClickScene(gl);
         gl.readPixels(intCoords[0], intCoords[1], 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
-        console.log('RGBA clicked: (' + pixels[0] + ', ' + pixels[1] + ', ' + pixels[2] + ', ' + pixels[3] + ')');
+        console.log('RGB clicked: (' + pixels[0] + ', ' + pixels[1] + ', ' + pixels[2] + ')');
         setAlphaMode(gl, 0.0);
         setClickedIndex(gl, pixels[3]);
         // renderClickScene(gl);
@@ -464,8 +464,8 @@ function getCanvasCoordinatesInt(ev, canvas){
 //Renders scene one a click action, also used for other actions
 function renderClickScene(gl){
   let alphaLocation = gl.getUniformLocation(gl.program, 'u_AlphaMode');
-  console.log('Alpha:');
-  console.log(gl.getUniform(gl.program, alphaLocation));
+  // console.log('Alpha:');
+  // console.log(gl.getUniform(gl.program, alphaLocation));
     gl.clear(gl.COLOR_BUFFER_BIT);
     for(i = 0; i < polyLineArr.length; i++){
         setObjectIndex(gl, i);
@@ -547,7 +547,7 @@ function initVertexBuffers(gl, vertexArray) {
   //Converts color picker hex to rgb array
   function hexToRgb(hex){
     var bigint = parseInt(hex.replace(/^#/, ''), 16);
-    console.log("Color Integer: " + bigint);
+    //console.log("Color Integer: " + bigint);
     var r = (bigint >> 16) & 255;
     var g = (bigint >> 8) & 255;
     var b = bigint & 255;
@@ -1139,7 +1139,7 @@ function initArrayBuffer(gl, data, num, type, attribute) {
   function clickModeChange(ev, gl){
     console.log("Changing click mode! Previous click mode: " + clickMode);
     clickMode = document.getElementById('clickMode').value;
-    console.log(clickMode);
+    //console.log(clickMode);
   }
   function setObjectIndex(gl, index){
     //Get uniform location
@@ -1148,7 +1148,7 @@ function initArrayBuffer(gl, data, num, type, attribute) {
     gl.uniform1f(u_ObjectIndex, index);
   }
   function setAlphaMode(gl, alpha){
-    console.log('Changing alpha mode to ' + alpha);
+    // console.log('Changing alpha mode to ' + alpha);
     //Get uniform location
     var u_AlphaMode = gl.getUniformLocation(gl.program, 'u_AlphaMode');
     //Set uniform calue
