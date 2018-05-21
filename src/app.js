@@ -77,6 +77,9 @@ var FSHADER_SOURCE = `
     uniform vec3 u_SpecularColor;
     uniform float u_SpecularExponent;
     uniform mat4 u_MvpMatrix;
+    uniform float u_ObjectIndex;
+    uniform float u_AlphaMode;
+    uniform float u_ClickedIndex;
     float celColor(in float colorVal){
       if(colorVal >= 1.0 ){
         return 1.0;
@@ -125,6 +128,13 @@ var FSHADER_SOURCE = `
         resultColor.g = celColor(resultColor.g);
         resultColor.b = celColor(resultColor.b);
         gl_FragColor = resultColor;
+      }
+      if(u_AlphaMode == 1.0){
+        gl_FragColor = vec4(vec3(gl_FragColor), u_ObjectIndex/255.0);
+      }
+      if(u_ClickedIndex == u_ObjectIndex){
+        vec3 highlight = vec3(0.15, 0.15, 0.15);
+        gl_FragColor = vec4(vec3(gl_FragColor) + highlight, 1.0); 
       }
     }
     
@@ -274,6 +284,8 @@ function main() {
   //Initializing color value
   gl.uniform4f(u_FragColor, rgb[0], rgb[1], rgb[2], 1.0);
  
+  setAlphaMode(gl, 0.0);
+  setClickedIndex(gl, -1.0);
   // Specify the color for clearing <canvas>
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
   gl.enable(gl.DEPTH_TEST);
@@ -307,11 +319,23 @@ function click(ev, gl, canvas, a_Position) {
       if(ev.button == 0){
         let pixels = new Uint8Array(4);
         let intCoords = getCanvasCoordinatesInt(ev, canvas);
-        console.log('RGBA clicked: (' + pixels[0] + ', ' + pixels[1] + ', ' + pixels[2] + ', ' + pixels[3] + ')');
+        //console.log('RGBA clicked: (' + pixels[0] + ', ' + pixels[1] + ', ' + pixels[2] + ', ' + pixels[3] + ')');
         //grab pixel
+        setAlphaMode(gl, 1.0);
         renderClickScene(gl);
         gl.readPixels(intCoords[0], intCoords[1], 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
         console.log('RGBA clicked: (' + pixels[0] + ', ' + pixels[1] + ', ' + pixels[2] + ', ' + pixels[3] + ')');
+        setAlphaMode(gl, 0.0);
+        setClickedIndex(gl, pixels[3]);
+        // renderClickScene(gl);
+        // gl.readPixels(intCoords[0], intCoords[1], 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+        // console.log('RGBA clicked: (' + pixels[0] + ', ' + pixels[1] + ', ' + pixels[2] + ', ' + pixels[3] + ')');
+        setTimeout(function (){renderClickScene(gl)}, 0);
+        //renderClickScene(gl);
+        
+        // renderClickScene(gl);
+        // renderClickScene(gl);
+        // renderClickScene(gl);
       }
       return;
 
@@ -439,8 +463,12 @@ function getCanvasCoordinatesInt(ev, canvas){
 
 //Renders scene one a click action, also used for other actions
 function renderClickScene(gl){
+  let alphaLocation = gl.getUniformLocation(gl.program, 'u_AlphaMode');
+  console.log('Alpha:');
+  console.log(gl.getUniform(gl.program, alphaLocation));
     gl.clear(gl.COLOR_BUFFER_BIT);
     for(i = 0; i < polyLineArr.length; i++){
+        setObjectIndex(gl, i);
         renderPolyLine(gl, polyLineArr[i]);
     }
 }
@@ -467,12 +495,14 @@ function renderMouseMoveScene(gl, vertices){
     gl.clear(gl.COLOR_BUFFER_BIT);
     for(i = 0; i < polyLineArr.length; i++){
         if(i != polyLineIndex){
+          setObjectIndex(gl, i);
           renderPolyLine(gl, polyLineArr[i]);
         }
         //
     }
     // var n = initVertexBuffers(gl, vertices);
     // gl.drawArrays(gl.LINE_STRIP, 0, n);
+    setObjectIndex(gl, polyLineIndex);
     renderPolyLine(gl, vertices);
     //gl.drawArrays(gl.POINTS, 0, n - 1);
 }
@@ -1110,4 +1140,21 @@ function initArrayBuffer(gl, data, num, type, attribute) {
     console.log("Changing click mode! Previous click mode: " + clickMode);
     clickMode = document.getElementById('clickMode').value;
     console.log(clickMode);
+  }
+  function setObjectIndex(gl, index){
+    //Get uniform location
+    var u_ObjectIndex = gl.getUniformLocation(gl.program, 'u_ObjectIndex');
+    //Set uniform value to index
+    gl.uniform1f(u_ObjectIndex, index);
+  }
+  function setAlphaMode(gl, alpha){
+    console.log('Changing alpha mode to ' + alpha);
+    //Get uniform location
+    var u_AlphaMode = gl.getUniformLocation(gl.program, 'u_AlphaMode');
+    //Set uniform calue
+    gl.uniform1f(u_AlphaMode, alpha);
+  }
+  function setClickedIndex(gl, index){
+    var u_ClickedIndex = gl.getUniformLocation(gl.program, 'u_ClickedIndex');
+    gl.uniform1f(u_ClickedIndex, index);
   }
