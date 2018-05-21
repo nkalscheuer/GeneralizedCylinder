@@ -130,6 +130,9 @@ var FSHADER_SOURCE = `
     
 `;
 
+var DRAWMODE = 0;
+var SELECTMODE = 1;
+
 var FSIZE = (new Float32Array()).BYTES_PER_ELEMENT;
 var pauseState = false;
 var polyLineArr = [];
@@ -151,6 +154,7 @@ var eyePosition = new Vector3();
 var lookAtCenter = new Vector3();
 var upVector = new Vector3([0, 1, 0]); //Up in the y direction
 
+var clickMode = DRAWMODE;
 var mainLightSource = new LightSource(new Vector3([1, 1, 1]), new Vector3([1, 1, 1]), 1);
 //var gl;
 function main() {
@@ -235,6 +239,7 @@ function main() {
   document.getElementById('lightRotate').onchange = function(ev){rotateLightSlider(ev, gl)};
   setupIOSOR("fileinput");
 
+  document.getElementById('clickMode').onchange = function(ev){clickModeChange(ev, gl)};
   //Delete functions
   var deleteButton = document.getElementById("deleteLine");
   console.log(deleteButton);
@@ -270,7 +275,7 @@ function main() {
   gl.uniform4f(u_FragColor, rgb[0], rgb[1], rgb[2], 1.0);
  
   // Specify the color for clearing <canvas>
-  gl.clearColor(1.0, 1.0, 1.0, 1.0);
+  gl.clearColor(0.0, 0.0, 0.0, 1.0);
   gl.enable(gl.DEPTH_TEST);
 
   // Clear <canvas>
@@ -296,6 +301,21 @@ function click(ev, gl, canvas, a_Position) {
       message += " right click";
     }
     console.log(message);
+
+    if(clickMode == 1){
+      //Select mode
+      if(ev.button == 0){
+        let pixels = new Uint8Array(4);
+        let intCoords = getCanvasCoordinatesInt(ev, canvas);
+        console.log('RGBA clicked: (' + pixels[0] + ', ' + pixels[1] + ', ' + pixels[2] + ', ' + pixels[3] + ')');
+        //grab pixel
+        renderClickScene(gl);
+        gl.readPixels(intCoords[0], intCoords[1], 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+        console.log('RGBA clicked: (' + pixels[0] + ', ' + pixels[1] + ', ' + pixels[2] + ', ' + pixels[3] + ')');
+      }
+      return;
+
+    }
 
     //Right click called, go into pause state, and remove rubber band
     if(ev.button == 2){
@@ -405,6 +425,15 @@ function getCanvasCoordinates(ev, canvas){
 
   x = ((x - rect.left) - canvas.width/2)/(canvas.width/2);
   y = (canvas.height/2 - (y - rect.top))/(canvas.height/2);
+  return [x, y];
+}
+
+function getCanvasCoordinatesInt(ev, canvas){
+  let x = ev.clientX;
+  let y = ev.clientY;
+  let rect = ev.target.getBoundingClientRect();
+  x = (x - rect.left);
+  y = (rect.bottom - y);
   return [x, y];
 }
 
@@ -1076,4 +1105,9 @@ function initArrayBuffer(gl, data, num, type, attribute) {
     mvpMatrix.lookAt(eye[0], eye[1], eye[2], point[0], point[1], point[2], upVec[0], upVec[1], upVec[2]);
     // Pass the model view projection matrix to u_MvpMatrix
     gl.uniformMatrix4fv(u_MvpMatrix, false, mvpMatrix.elements);
+  }
+  function clickModeChange(ev, gl){
+    console.log("Changing click mode! Previous click mode: " + clickMode);
+    clickMode = document.getElementById('clickMode').value;
+    console.log(clickMode);
   }
