@@ -7,6 +7,7 @@ class RegularPolygon{
         //console.log(this.theta);
         this.center = center;
         this.vertices = [];
+        this.normals = [];
 
         this.vertices.push(firstVertex);
         this.axialVector = axialVector;
@@ -29,6 +30,8 @@ class RegularPolygon{
                 this.axialVector.elements[1],  
                 this.axialVector.elements[2]);
             var translateVector = rotateMatrix.multiplyVector3(radialVector);
+            // Get normal for that point, which is essentially the translate vector
+            this.normals.push(translateVector);
             var translatedPoint = this.translatePoint(this.center, translateVector); 
             //console.log(translatedPoint);
             this.vertices.push(translatedPoint);   
@@ -36,6 +39,9 @@ class RegularPolygon{
 
     }
 
+    getNormals() {
+        return this.normals;
+    }
     translatePoint(point, vector){
         var result = new Vector3();
         result.elements[0] = point.elements[0] + vector.elements[0];
